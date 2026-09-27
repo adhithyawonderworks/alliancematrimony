@@ -1,10 +1,16 @@
-name: Deploy account deletion page
+name: Deploy Alliance Matrimony website
 
 on:
   push:
     branches: [main]
     paths:
+      - 'web/homepage.html'
+      - 'web/site.css'
+      - 'web/terms.html'
+      - 'web/privacy.html'
+      - 'web/refunds.html'
       - 'web/delete-account.html'
+      - 'assets/images/alliance_app_icon.png'
       - 'web/CNAME'
       - '.github/workflows/deploy-deletion-page.yml'
   workflow_dispatch:
@@ -31,11 +37,16 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare static site
+      - name: Prepare public website
         run: |
-          mkdir -p _site
-          cp web/delete-account.html _site/index.html
+          mkdir -p _site/assets/images
+          cp web/homepage.html _site/index.html
           cp web/delete-account.html _site/delete-account.html
+          cp web/terms.html _site/terms.html
+          cp web/privacy.html _site/privacy.html
+          cp web/refunds.html _site/refunds.html
+          cp web/site.css _site/site.css
+          cp assets/images/alliance_app_icon.png _site/assets/images/alliance_app_icon.png
           cp web/CNAME _site/CNAME
 
       - name: Upload Pages artifact
