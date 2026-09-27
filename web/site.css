@@ -1,0 +1,92 @@
+:root {
+  color-scheme: light;
+  --ink: #24101f;
+  --muted: #685a65;
+  --paper: #fbf8f6;
+  --line: #e8dfe2;
+  --berry: #9d3155;
+  --coral: #ec6b72;
+  --plum: #24101f;
+  --mint: #bfe3d6;
+  font-family: "Aptos", "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); }
+a { color: var(--berry); }
+.site-header { min-height: 78px; padding: 14px max(24px, calc((100% - 1160px) / 2)); display: flex; align-items: center; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--line); background: rgba(251, 248, 246, .96); }
+.brand { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; font-size: 17px; font-weight: 700; }
+.brand img { border-radius: 12px; }
+.brand strong { color: var(--berry); font-weight: 500; }
+nav { display: flex; align-items: center; gap: 26px; }
+.site-header nav a, .site-footer nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+.site-header nav a:hover, .site-footer nav a:hover { color: var(--berry); }
+.site-header .nav-contact { padding: 10px 16px; border: 1px solid var(--berry); border-radius: 5px; color: var(--berry); }
+main { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+.hero { min-height: 510px; display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: 70px; padding: 68px 0 76px; }
+.eyebrow { margin: 0 0 16px; color: var(--berry); font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 1.6px; }
+h1, h2, p { margin-top: 0; }
+h1 { margin-bottom: 22px; font-family: Georgia, "Times New Roman", serif; font-size: 64px; font-weight: 500; line-height: 1.06; }
+h1 span { color: var(--berry); }
+.hero-intro { max-width: 580px; margin-bottom: 26px; color: var(--muted); font-size: 17px; line-height: 1.7; }
+.primary-link { display: inline-flex; align-items: center; gap: 28px; padding: 14px 18px; border-radius: 5px; background: var(--berry); color: white; text-decoration: none; font-size: 14px; font-weight: 650; }
+.primary-link:hover { background: var(--ink); }
+.quiet-note { margin: 15px 0 0; color: var(--muted); font-size: 12px; }
+.hero-art { justify-self: end; width: min(100%, 370px); padding: 26px; border-radius: 8px; background: var(--plum); color: white; }
+.hero-art img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px; }
+.hero-art p { margin: 18px 0 0; color: #f7e8ee; font-family: Georgia, "Times New Roman", serif; font-size: 19px; line-height: 1.45; }
+.service-band { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.service-band > div { min-height: 190px; padding: 28px 30px 28px 0; }
+.service-band > div + div { padding-left: 30px; border-left: 1px solid var(--line); }
+.step-number { color: var(--berry); font-size: 12px; font-weight: 700; }
+h2 { margin-bottom: 12px; font-family: Georgia, "Times New Roman", serif; font-size: 28px; font-weight: 500; line-height: 1.2; }
+.service-band h2 { margin-top: 22px; font-size: 22px; }
+.service-band p, .membership p, .safety p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.membership { display: grid; grid-template-columns: 1fr 260px; align-items: center; gap: 50px; padding: 74px 0; border-bottom: 1px solid var(--line); }
+.membership h2 { max-width: 520px; font-size: 36px; }
+.membership > div:first-child > p:last-child { max-width: 640px; }
+.price-block { padding: 22px 24px; border-left: 3px solid var(--coral); }
+.price-block span, .price-block small { display: block; color: var(--muted); font-size: 12px; }
+.price-block strong { display: block; margin: 6px 0; font-family: Georgia, "Times New Roman", serif; font-size: 48px; font-weight: 500; }
+.price-block small { margin-top: 12px; line-height: 1.5; }
+.safety { display: grid; grid-template-columns: .9fr 1.1fr; gap: 60px; padding: 74px 0; }
+.safety-heading h2 { font-size: 34px; }
+.safety-copy p { margin-bottom: 15px; }
+.contact-strip { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 26px 30px; margin-bottom: 70px; background: #edf4f0; border-left: 4px solid #4d927c; }
+.contact-strip .eyebrow { margin-bottom: 6px; color: #356e5e; }
+.contact-strip h2 { margin-bottom: 0; font-size: 22px; }
+.contact-strip > a { color: #285f52; font-size: 15px; font-weight: 650; }
+.site-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 18px; padding: 26px max(24px, calc((100% - 1160px) / 2)); border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.footer-brand { color: var(--ink); font-size: 14px; font-weight: 700; text-decoration: none; }
+.site-footer nav { gap: 18px; }
+.policy-main { max-width: 850px; min-height: 70vh; padding-top: 64px; padding-bottom: 72px; }
+.policy-main h1 { font-size: 54px; }
+.policy-main .updated { margin-bottom: 34px; color: var(--muted); font-size: 13px; }
+.policy-main h2 { margin-top: 32px; font-size: 24px; }
+.policy-main p, .policy-main li { color: var(--muted); font-size: 15px; line-height: 1.75; }
+.policy-main li { margin: 7px 0; }
+.policy-main .policy-contact { padding: 18px; background: #edf4f0; border-left: 3px solid #4d927c; }
+.policy-main .policy-contact p { margin: 0; }
+
+@media (max-width: 760px) {
+  .site-header { padding: 12px 18px; }
+  .site-header nav { gap: 12px; }
+  .site-header nav a:not(.nav-contact) { display: none; }
+  main { padding: 0 20px; }
+  .hero { grid-template-columns: 1fr; gap: 34px; padding: 54px 0; }
+  h1 { font-size: 42px; }
+  .policy-main h1 { font-size: 38px; }
+  .hero-art { justify-self: start; width: min(100%, 320px); }
+  .service-band { grid-template-columns: 1fr; }
+  .service-band > div, .service-band > div + div { min-height: auto; padding: 24px 0; border-left: 0; }
+  .service-band > div + div { border-top: 1px solid var(--line); }
+  .service-band h2 { margin-top: 12px; }
+  .membership, .safety { grid-template-columns: 1fr; gap: 28px; padding: 52px 0; }
+  .membership h2, .safety-heading h2 { font-size: 30px; }
+  .price-block { padding-left: 18px; }
+  .contact-strip { align-items: flex-start; flex-direction: column; padding: 22px; margin-bottom: 48px; }
+  .site-footer { padding: 24px 20px; align-items: flex-start; flex-direction: column; }
+  .site-footer nav { flex-wrap: wrap; }
+  .policy-main { padding-top: 44px; }
+}
