@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -26,6 +27,19 @@ class SupabaseService {
     await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   }
 
+  Future<Map<String, dynamic>?> fetchConnectedProfile(String userId) async {
+    try {
+      final response = await client.rpc(
+        'get_connected_matrimony_profile',
+        params: {'target_user_id': userId},
+      );
+      if (response is Map) return Map<String, dynamic>.from(response);
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   // Get Supabase client only when the SDK has been initialized.
   SupabaseClient? get clientOrNull {
     try {
@@ -50,6 +64,18 @@ class SupabaseService {
 
   // Get current user id
   String? get currentUserId => clientOrNull?.auth.currentUser?.id;
+  String? get currentUserEmail => clientOrNull?.auth.currentUser?.email;
+
+  Future<String?> updateAccountPassword(String password) async {
+    try {
+      await client.auth.updateUser(UserAttributes(password: password));
+      return null;
+    } on AuthException catch (error) {
+      return error.message;
+    } catch (error) {
+      return error.toString();
+    }
+  }
 
   // ─── Matrimony Profile Methods ───────────────────────────────────────────
 
@@ -91,6 +117,115 @@ class SupabaseService {
       throw Exception('Save failed: ${e.message} (code: ${e.code})');
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<void> recordTruthfulnessSubmission({
+    required DateTime acceptedAt,
+    required Map<String, dynamic> profileSnapshot,
+  }) async {
+    await client.from('profile_truthfulness_submissions').insert({
+      'user_id': currentUserId,
+      'accepted_at': acceptedAt.toUtc().toIso8601String(),
+      'agreement_version': 'truthful-profile-v1',
+      'profile_snapshot': profileSnapshot,
+    });
+  }
+
+  Future<String> uploadProfilePhoto(XFile image) async {
+    final uid = currentUserId;
+    if (uid == null) throw Exception('Not logged in. Please sign in again.');
+    final extension = image.name.contains('.')
+        ? image.name.split('.').last.toLowerCase()
+        : 'jpg';
+    final path = '$uid/profile.$extension';
+    final contentType = switch (extension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
+    await client.storage
+        .from('profile-photos')
+        .uploadBinary(
+          path,
+          await image.readAsBytes(),
+          fileOptions: FileOptions(upsert: true, contentType: contentType),
+        );
+    return client.storage.from('profile-photos').getPublicUrl(path);
+  }
+
+  /// Uploads an Aadhar card image to the private 'identity-documents' bucket
+  /// and marks verification as pending admin review.
+  /// TODO(aadhar-ocr): No OCR/verification API is integrated yet. This currently
+  /// stores the image and sets status to 'pending' for manual admin review.
+  /// When an OCR provider is chosen, call it here (or via a Supabase Edge
+  /// Function) to auto-extract/match the name before falling back to manual review.
+  Future<bool> submitAadharVerification({
+    required XFile image,
+    required String aadharName,
+  }) async {
+    final uid = currentUserId;
+    if (uid == null) return false;
+    try {
+      final extension = image.name.contains('.')
+          ? image.name.split('.').last.toLowerCase()
+          : 'jpg';
+      final path = '$uid/aadhar.$extension';
+      final contentType = switch (extension) {
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        _ => 'image/jpeg',
+      };
+      await client.storage
+          .from('identity-documents')
+          .uploadBinary(
+            path,
+            await image.readAsBytes(),
+            fileOptions: FileOptions(upsert: true, contentType: contentType),
+          );
+      await client.from('matrimony_profiles').update({
+        'aadhar_name': aadharName,
+        'aadhar_image_url': path,
+        'aadhar_verification_status': 'pending',
+      }).eq('user_id', uid);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Creates a short-lived signed URL to display the private Aadhar image
+  /// (e.g. so the user can review what they submitted).
+  Future<String?> getAadharImageSignedUrl(String storagePath) async {
+    if (storagePath.isEmpty) return null;
+    try {
+      return await client.storage
+          .from('identity-documents')
+          .createSignedUrl(storagePath, 60 * 10);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Saves the local security (passcode/biometric) settings to the backend so
+  /// they can be recovered on another device. [passcodeHash] should already be
+  /// hashed client-side (never send a plaintext passcode).
+  Future<bool> updateSecuritySettings({
+    String? passcodeHash,
+    bool? biometricEnabled,
+  }) async {
+    final uid = currentUserId;
+    if (uid == null) return false;
+    final fields = <String, dynamic>{
+      if (passcodeHash != null) 'passcode_hash': passcodeHash,
+      if (biometricEnabled != null) 'biometric_enabled': biometricEnabled,
+    };
+    if (fields.isEmpty) return true;
+    try {
+      await client.from('matrimony_profiles').update(fields).eq('user_id', uid);
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -210,9 +345,17 @@ class SupabaseService {
 
   /// Sign up with email and password.
   /// Returns null on success, or an error message string on failure.
-  Future<String?> signUpWithPassword(String email, String password) async {
+  Future<String?> signUpWithPassword(
+    String email,
+    String password, {
+    Map<String, dynamic>? metadata,
+  }) async {
     try {
-      await client.auth.signUp(email: email, password: password);
+      await client.auth.signUp(
+        email: email,
+        password: password,
+        data: metadata,
+      );
       return null;
     } on AuthException catch (e) {
       return e.message;
@@ -237,11 +380,8 @@ class SupabaseService {
           )
           .maybeSingle();
 
-      if (existing != null) {
-        return existing['id'] as String;
-      }
+      if (existing != null) return existing['id'] as String;
 
-      // Create new conversation
       final created = await client
           .from('chat_conversations')
           .insert({'participant_one': uid, 'participant_two': otherUserId})
@@ -276,11 +416,7 @@ class SupabaseService {
             ? conv['participant_two'] as String
             : conv['participant_one'] as String;
 
-        final profile = await client
-            .from('matrimony_profiles')
-            .select('first_name, last_name, image_url')
-            .eq('user_id', otherId)
-            .maybeSingle();
+        final profile = await fetchConnectedProfile(otherId);
 
         enriched.add({
           ...conv,
@@ -316,6 +452,22 @@ class SupabaseService {
     } catch (_) {
       return [];
     }
+  }
+
+  Future<void> markReceivedMessagesRead(String conversationId) async {
+    final uid = currentUserId;
+    if (uid == null) return;
+    try {
+      await client
+          .from('chat_messages')
+          .update({
+            'is_read': true,
+            'read_at': DateTime.now().toIso8601String(),
+          })
+          .eq('conversation_id', conversationId)
+          .neq('sender_id', uid)
+          .eq('is_read', false);
+    } catch (_) {}
   }
 
   /// Send a message in a conversation. Returns the inserted message or null.
@@ -357,8 +509,9 @@ class SupabaseService {
   RealtimeChannel subscribeToMessages({
     required String conversationId,
     required void Function(Map<String, dynamic> message) onNewMessage,
+    void Function(Map<String, dynamic> message)? onMessageUpdated,
   }) {
-    return client
+    final channel = client
         .channel('chat_messages_$conversationId')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
@@ -372,8 +525,23 @@ class SupabaseService {
           callback: (payload) {
             onNewMessage(Map<String, dynamic>.from(payload.newRecord));
           },
-        )
-        .subscribe();
+        );
+    if (onMessageUpdated != null) {
+      channel.onPostgresChanges(
+        event: PostgresChangeEvent.update,
+        schema: 'public',
+        table: 'chat_messages',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'conversation_id',
+          value: conversationId,
+        ),
+        callback: (payload) {
+          onMessageUpdated(Map<String, dynamic>.from(payload.newRecord));
+        },
+      );
+    }
+    return channel.subscribe();
   }
 
   /// Subscribe to conversation list updates (last_message changes).
@@ -387,20 +555,215 @@ class SupabaseService {
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'chat_conversations',
-          callback: (payload) {
-            onUpdate();
-          },
+          callback: (payload) => onUpdate(),
         )
         .subscribe();
   }
 
+  // ─── Discovery, Shortlist, Blocking, and Verification ─────────────────────
+
+  Future<List<Map<String, dynamic>>> discoverProfiles() async {
+    if (currentUserId == null) return [];
+    try {
+      final response = await client.rpc('discover_matrimony_profiles');
+      return List<Map<String, dynamic>>.from(response);
+    } on PostgrestException {
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<Set<String>> fetchSavedProfileIds() async {
+    final uid = currentUserId;
+    if (uid == null) return {};
+    try {
+      final response = await client
+          .from('saved_profiles')
+          .select('saved_user_id')
+          .eq('user_id', uid);
+      return List<Map<String, dynamic>>.from(
+        response,
+      ).map((row) => row['saved_user_id'] as String).toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<bool> setProfileSaved(String profileId, {required bool saved}) async {
+    final uid = currentUserId;
+    if (uid == null) return false;
+    try {
+      if (saved) {
+        await client.from('saved_profiles').upsert({
+          'user_id': uid,
+          'saved_user_id': profileId,
+        });
+      } else {
+        await client
+            .from('saved_profiles')
+            .delete()
+            .eq('user_id', uid)
+            .eq('saved_user_id', profileId);
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> blockUser(String blockedUserId) async {
+    final uid = currentUserId;
+    if (uid == null) return false;
+    try {
+      await client.from('blocked_users').upsert({
+        'user_id': uid,
+        'blocked_user_id': blockedUserId,
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> unblockUser(String blockedUserId) async {
+    final uid = currentUserId;
+    if (uid == null) return false;
+    try {
+      await client
+          .from('blocked_users')
+          .delete()
+          .eq('user_id', uid)
+          .eq('blocked_user_id', blockedUserId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<Set<String>> fetchBlockedUserIds() async {
+    final uid = currentUserId;
+    if (uid == null) return {};
+    try {
+      final response = await client
+          .from('blocked_users')
+          .select('blocked_user_id')
+          .eq('user_id', uid);
+      return List<Map<String, dynamic>>.from(
+        response,
+      ).map((row) => row['blocked_user_id'] as String).toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<bool> requestPhotoVerification(String photoUrl) async {
+    final uid = currentUserId;
+    if (uid == null || photoUrl.trim().isEmpty) return false;
+    try {
+      await client.from('photo_verification_requests').insert({
+        'user_id': uid,
+        'photo_url': photoUrl.trim(),
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> submitAddressVerification({
+    required String documentType,
+    required XFile frontImage,
+    required XFile backImage,
+  }) async {
+    final uid = currentUserId;
+    if (uid == null) return false;
+    try {
+      final frontPath =
+          '$uid/front_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final backPath = '$uid/back_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final bucket = client.storage.from('address-verification');
+      await bucket.uploadBinary(
+        frontPath,
+        await frontImage.readAsBytes(),
+        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+      );
+      await bucket.uploadBinary(
+        backPath,
+        await backImage.readAsBytes(),
+        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+      );
+      await client.from('address_verification_documents').upsert({
+        'user_id': uid,
+        'document_type': documentType,
+        'front_object_path': frontPath,
+        'back_object_path': backPath,
+        'submitted_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      await client
+          .from('matrimony_profiles')
+          .update({'address_verification_status': 'pending'})
+          .eq('user_id', uid);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<String?> fetchPhotoVerificationStatus() async {
+    final uid = currentUserId;
+    if (uid == null) return null;
+    try {
+      final response = await client
+          .from('photo_verification_requests')
+          .select('status')
+          .eq('user_id', uid)
+          .order('submitted_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      return response?['status'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String> fetchAddressVerificationStatus() async {
+    final uid = currentUserId;
+    if (uid == null) return 'not_submitted';
+    try {
+      final profile = await client
+          .from('matrimony_profiles')
+          .select('address_verification_status')
+          .eq('user_id', uid)
+          .maybeSingle();
+      return profile?['address_verification_status'] as String? ??
+          'not_submitted';
+    } catch (_) {
+      return 'not_submitted';
+    }
+  }
+
   // ─── Interests Methods ────────────────────────────────────────────────────
 
-  /// Send an interest to another user. Returns true on success.
   Future<bool> sendInterest(String receiverId, {String message = ''}) async {
     final uid = currentUserId;
     if (uid == null) return false;
     try {
+      final existing = await client
+          .from('interests')
+          .select('id, status')
+          .eq('sender_id', uid)
+          .eq('receiver_id', receiverId)
+          .maybeSingle();
+      if (existing != null) {
+        if (existing['status'] != 'declined') return true;
+        await client
+            .from('interests')
+            .update({'status': 'pending', 'message': message})
+            .eq('id', existing['id'] as String)
+            .eq('sender_id', uid);
+        return true;
+      }
       await client.from('interests').insert({
         'sender_id': uid,
         'receiver_id': receiverId,
@@ -408,14 +771,11 @@ class SupabaseService {
         'status': 'pending',
       });
       return true;
-    } on PostgrestException {
-      return false;
     } catch (_) {
       return false;
     }
   }
 
-  /// Fetch received interests for the current user, enriched with sender profile.
   Future<List<Map<String, dynamic>>> fetchReceivedInterests() async {
     final uid = currentUserId;
     if (uid == null) return [];
@@ -425,35 +785,21 @@ class SupabaseService {
           .select('*')
           .eq('receiver_id', uid)
           .order('created_at', ascending: false);
-
-      final interests = List<Map<String, dynamic>>.from(response);
       final enriched = <Map<String, dynamic>>[];
-
-      for (final interest in interests) {
+      for (final interest in List<Map<String, dynamic>>.from(response)) {
         final senderId = interest['sender_id'] as String;
-        final profile = await client
-            .from('matrimony_profiles')
-            .select(
-              'first_name, last_name, age, job, place, height_cm, image_url, is_verified',
-            )
-            .eq('user_id', senderId)
-            .maybeSingle();
-
         enriched.add({
           ...interest,
-          'profile': profile,
+          'profile': await fetchConnectedProfile(senderId),
           'other_user_id': senderId,
         });
       }
       return enriched;
-    } on PostgrestException {
-      return [];
     } catch (_) {
       return [];
     }
   }
 
-  /// Fetch sent interests for the current user, enriched with receiver profile.
   Future<List<Map<String, dynamic>>> fetchSentInterests() async {
     final uid = currentUserId;
     if (uid == null) return [];
@@ -463,122 +809,83 @@ class SupabaseService {
           .select('*')
           .eq('sender_id', uid)
           .order('created_at', ascending: false);
-
-      final interests = List<Map<String, dynamic>>.from(response);
       final enriched = <Map<String, dynamic>>[];
-
-      for (final interest in interests) {
+      for (final interest in List<Map<String, dynamic>>.from(response)) {
         final receiverId = interest['receiver_id'] as String;
-        final profile = await client
-            .from('matrimony_profiles')
-            .select(
-              'first_name, last_name, age, job, place, height_cm, image_url, is_verified',
-            )
-            .eq('user_id', receiverId)
-            .maybeSingle();
-
         enriched.add({
           ...interest,
-          'profile': profile,
+          'profile': await fetchConnectedProfile(receiverId),
           'other_user_id': receiverId,
         });
       }
       return enriched;
-    } on PostgrestException {
-      return [];
     } catch (_) {
       return [];
     }
   }
 
-  /// Accept a received interest. Returns true on success.
   Future<bool> acceptInterest(String interestId) async {
     final uid = currentUserId;
     if (uid == null) return false;
     try {
-      await client
+      final updated = await client
           .from('interests')
           .update({'status': 'accepted'})
           .eq('id', interestId)
-          .eq('receiver_id', uid);
-      return true;
-    } on PostgrestException {
-      return false;
+          .eq('receiver_id', uid)
+          .select('id')
+          .maybeSingle();
+      return updated != null;
     } catch (_) {
       return false;
     }
   }
 
-  /// Decline a received interest. Returns true on success.
   Future<bool> declineInterest(String interestId) async {
     final uid = currentUserId;
     if (uid == null) return false;
     try {
-      await client
+      final updated = await client
           .from('interests')
           .update({'status': 'declined'})
           .eq('id', interestId)
-          .eq('receiver_id', uid);
-      return true;
-    } on PostgrestException {
-      return false;
+          .eq('receiver_id', uid)
+          .select('id')
+          .maybeSingle();
+      return updated != null;
     } catch (_) {
       return false;
     }
   }
 
-  /// Fetch mutual matches — interests where both sides accepted each other.
   Future<List<Map<String, dynamic>>> fetchMatches() async {
     final uid = currentUserId;
     if (uid == null) return [];
     try {
-      // Fetch interests where current user accepted (receiver accepted)
-      final receivedAccepted = await client
+      final response = await client
           .from('interests')
           .select('*')
-          .eq('receiver_id', uid)
-          .eq('status', 'accepted');
-
+          .eq('status', 'accepted')
+          .or('sender_id.eq.$uid,receiver_id.eq.$uid');
       final matches = <Map<String, dynamic>>[];
-
-      for (final interest in List<Map<String, dynamic>>.from(
-        receivedAccepted,
-      )) {
-        final senderId = interest['sender_id'] as String;
-        // Check if sender also accepted an interest from current user
-        final reverseInterest = await client
-            .from('interests')
-            .select('*')
-            .eq('sender_id', uid)
-            .eq('receiver_id', senderId)
-            .eq('status', 'accepted')
-            .maybeSingle();
-
-        if (reverseInterest != null) {
-          final profile = await client
-              .from('matrimony_profiles')
-              .select(
-                'first_name, last_name, age, job, place, height_cm, image_url, is_verified',
-              )
-              .eq('user_id', senderId)
-              .maybeSingle();
-
-          matches.add({
-            ...interest,
-            'profile': profile,
-            'other_user_id': senderId,
-          });
-        }
+      final addedUserIds = <String>{};
+      for (final interest in List<Map<String, dynamic>>.from(response)) {
+        final otherUserId = interest['sender_id'] == uid
+            ? interest['receiver_id'] as String
+            : interest['sender_id'] as String;
+        if (!addedUserIds.add(otherUserId)) continue;
+        matches.add({
+          ...interest,
+          'profile': await fetchConnectedProfile(otherUserId),
+          'other_user_id': otherUserId,
+        });
       }
       return matches;
-    } on PostgrestException {
-      return [];
     } catch (_) {
       return [];
     }
   }
 
-  /// Subscribe to interest changes for the current user.
   RealtimeChannel subscribeToInterests({required void Function() onUpdate}) {
     final uid = currentUserId;
     return client
@@ -587,9 +894,7 @@ class SupabaseService {
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'interests',
-          callback: (payload) {
-            onUpdate();
-          },
+          callback: (payload) => onUpdate(),
         )
         .subscribe();
   }

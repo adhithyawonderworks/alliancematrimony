@@ -1,3 +1,24 @@
+# PayU checkout (web)
+
+The premium flow redirects the browser to PayU's hosted checkout page. Order
+creation and the return callback are handled by Supabase Edge Functions;
+`PAYU_MERCHANT_SALT` must never be shipped to the Flutter client.
+
+```powershell
+supabase secrets set PAYU_MERCHANT_KEY=<your-test-key> PAYU_MERCHANT_SALT=<your-test-salt> PAYU_ENV=test APP_BASE_URL=https://your-site/#/payment-result-screen
+supabase functions deploy create-payu-order
+supabase functions deploy payu-callback
+```
+
+- `create-payu-order` authenticates the user, builds the PayU request hash,
+  and returns the form fields the web app posts to PayU.
+- `payu-callback` is PayU's `surl`/`furl` target. It verifies the response
+  hash, records the purchase in `premium_purchases`, and redirects the
+  browser back to `APP_BASE_URL` with a `status=success|failure` query param
+  that the app's `payment-result-screen` route reads.
+
+Open Premium and click `Pay INR 500` to be redirected to PayU's test-mode
+checkout page.
 # Flutter
 
 A modern Flutter-based mobile application utilizing the latest mobile development technologies and tools for building responsive cross-platform applications.
@@ -134,15 +155,11 @@ flutter build apk --release
 flutter build ios --release
 ```
 
-## Account deletion website
+## Public website and account deletion
 
-The public deletion page is `web/delete-account.html`. Upload it to IONOS at:
+The public business homepage is `web/homepage.html`. The GitHub Pages workflow publishes it as the domain root, together with the terms, privacy, refund/cancellation, and account-deletion pages. The account deletion page is `web/delete-account.html` and calls the `account-deletion` Supabase Edge Function.
 
-```text
-https://www.alliancematrimony.online/delete-account.html
-```
-
-The page calls the `account-deletion` Supabase Edge Function. Deploy the migration and function from the project root:
+Deploy the migration and function from the project root:
 
 ```bash
 supabase db push
@@ -154,9 +171,17 @@ supabase secrets set PUBLIC_DELETION_URL=https://www.alliancematrimony.online/de
 
 The sending domain must be verified in Resend before deletion emails can be delivered. The Supabase service-role key is used only by the Edge Function and must never be placed in the webpage or the Flutter app.
 
-### GitHub Pages alternative
+### GitHub Pages deployment
 
-The repository includes `.github/workflows/deploy-deletion-page.yml`. Push the project to GitHub, then open **Settings → Pages** and set the source to **GitHub Actions**. The workflow publishes `web/delete-account.html` at both `/` and `/delete-account.html`.
+The repository includes `.github/workflows/deploy-deletion-page.yml`. Push changes to the `main` branch, then open **Settings → Pages** and set the source to **GitHub Actions**. The workflow publishes these paths:
+
+```text
+/                         Alliance Matrimony homepage
+/terms.html               Terms of Use
+/privacy.html             Privacy Policy
+/refunds.html             Refund and Cancellation Policy
+/delete-account.html      Account deletion
+```
 
 The `web/CNAME` file configures the custom domain. In the domain's DNS settings, point `www` to the GitHub Pages hostname shown by GitHub, usually:
 

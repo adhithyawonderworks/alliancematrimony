@@ -11,7 +11,11 @@ class ProfileCardWidget extends StatelessWidget {
   final MatrimonyProfile profile;
   final bool isPaid;
   final bool hasInterest;
+  final bool isSaved;
   final VoidCallback onInterest;
+  final VoidCallback onTap;
+  final VoidCallback onSave;
+  final VoidCallback onBlock;
   final VoidCallback? onChat;
 
   const ProfileCardWidget({
@@ -19,28 +23,35 @@ class ProfileCardWidget extends StatelessWidget {
     required this.profile,
     required this.isPaid,
     required this.hasInterest,
+    required this.isSaved,
     required this.onInterest,
+    required this.onTap,
+    required this.onSave,
+    required this.onBlock,
     this.onChat,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1520),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 6, child: _buildPhotoSection(context)),
-              Expanded(flex: 4, child: _buildInfoSection(context)),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1520),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 6, child: _buildPhotoSection(context)),
+                Expanded(flex: 4, child: _buildInfoSection(context)),
+              ],
+            ),
           ),
         ),
       ),
@@ -67,7 +78,7 @@ class ProfileCardWidget extends StatelessWidget {
         ),
         if (!isPaid)
           BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+            filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
             child: Container(
               color: const Color(0xFF120D16).withAlpha(180),
               child: Center(
@@ -166,32 +177,79 @@ class ProfileCardWidget extends StatelessWidget {
                     ],
                   ),
                 ),
+              if (profile.addressVerified) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF17334A),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.home_work_outlined,
+                        size: 9,
+                        color: Color(0xFF8BD3E6),
+                      ),
+                      SizedBox(width: 3),
+                      Text(
+                        'Address verified',
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF8BD3E6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
         Positioned(
-          top: 8,
-          right: 8,
-          child: GestureDetector(
-            onTap: () => ReportUserBottomSheet.show(
-              context,
-              reportedUserId: profile.id,
-              reportedUserName: profile.displayName,
-            ),
-            child: Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                color: const Color(0xFF120D16).withAlpha(160),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white.withAlpha(30), width: 1),
+          top: 2,
+          right: 2,
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: isSaved ? 'Remove from saved' : 'Save profile',
+                onPressed: onSave,
+                icon: Icon(
+                  isSaved
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
+                  color: isSaved ? const Color(0xFFFFD166) : Colors.white,
+                  size: 18,
+                ),
               ),
-              child: const Icon(
-                Icons.flag_outlined,
-                size: 13,
-                color: Color(0xFFCCBDD0),
+              PopupMenuButton<String>(
+                tooltip: 'Profile actions',
+                color: const Color(0xFF1E1520),
+                icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+                onSelected: (action) {
+                  if (action == 'report') {
+                    ReportUserBottomSheet.show(
+                      context,
+                      reportedUserId: profile.id,
+                      reportedUserName: profile.displayName,
+                    );
+                  } else if (action == 'block') {
+                    onBlock();
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'report', child: Text('Report profile')),
+                  PopupMenuItem(value: 'block', child: Text('Block profile')),
+                ],
               ),
-            ),
+            ],
           ),
         ),
       ],
@@ -339,7 +397,8 @@ class ProfileCardWidget extends StatelessWidget {
                         ),
                       )
                     : GestureDetector(
-                        onTap: () => context.push(AppRoutes.premiumLandingScreen),
+                        onTap: () =>
+                            context.push(AppRoutes.premiumLandingScreen),
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFF2A1E2E),

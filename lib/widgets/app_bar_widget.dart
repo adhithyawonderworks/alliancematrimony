@@ -63,7 +63,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                           text: const TextSpan(
                             children: [
                               TextSpan(
-                                text: 'Adithya',
+                                text: 'Alliance Matrimony',
                                 style: TextStyle(
                                   fontFamily: 'Plus Jakarta Sans',
                                   fontSize: 20,

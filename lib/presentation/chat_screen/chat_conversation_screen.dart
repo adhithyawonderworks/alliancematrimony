@@ -9,12 +9,14 @@ class ChatMessage {
   final String text;
   final bool isMe;
   final String time;
+  final bool isRead;
 
   const ChatMessage({
     required this.id,
     required this.text,
     required this.isMe,
     required this.time,
+    this.isRead = false,
   });
 }
 
@@ -95,6 +97,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
         text: m['content'] as String,
         isMe: m['sender_id'] == currentUid,
         time: _formatTime(dt),
+        isRead: m['is_read'] == true,
       );
     }).toList();
 
@@ -106,6 +109,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
         _isLoading = false;
       });
       _scrollToBottom();
+      await _supabase.markReceivedMessagesRead(convId);
     }
   }
 
@@ -122,11 +126,32 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
           text: msg['content'] as String,
           isMe: false,
           time: _formatTime(dt),
+          isRead: false,
         );
         if (mounted) {
           setState(() => _messages.add(chatMsg));
           _scrollToBottom();
+          _supabase.markReceivedMessagesRead(convId);
         }
+      },
+      onMessageUpdated: (msg) {
+        if (msg['is_read'] != true || !mounted) return;
+        final messageId = msg['id'] as String?;
+        setState(() {
+          final index = _messages.indexWhere(
+            (message) => message.id == messageId,
+          );
+          if (index >= 0) {
+            final current = _messages[index];
+            _messages[index] = ChatMessage(
+              id: current.id,
+              text: current.text,
+              isMe: current.isMe,
+              time: current.time,
+              isRead: true,
+            );
+          }
+        });
       },
     );
   }
@@ -151,6 +176,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
       text: text,
       isMe: true,
       time: _formatTime(DateTime.now()),
+      isRead: false,
     );
     setState(() {
       _messages.add(optimisticMsg);
@@ -158,14 +184,29 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     });
     _scrollToBottom();
 
-    if (_supabaseConversationId != null) {
-      await _supabase.sendMessage(
-        conversationId: _supabaseConversationId!,
-        content: text,
+    final message = _supabaseConversationId == null
+        ? null
+        : await _supabase.sendMessage(
+            conversationId: _supabaseConversationId!,
+            content: text,
+          );
+    if (!mounted) return;
+    setState(() {
+      if (message == null) {
+        _messages.removeWhere((item) => item.id == optimisticMsg.id);
+        _messageController.text = text;
+      }
+      _isSending = false;
+    });
+    if (message == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Message not sent. Please retry; messaging is limited to two profiles per day.',
+          ),
+        ),
       );
     }
-
-    if (mounted) setState(() => _isSending = false);
   }
 
   void _scrollToBottom() {
@@ -320,6 +361,17 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                 reportedUserId: widget.otherUserId!,
                 reportedUserName: widget.name,
               );
+            } else if (value == 'block' && widget.otherUserId != null) {
+              final blocked = await _supabase.blockUser(widget.otherUserId!);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    blocked ? 'Profile blocked' : 'Unable to block profile',
+                  ),
+                ),
+              );
+              if (blocked) Navigator.of(context).pop();
             }
           },
           itemBuilder: (context) => [
@@ -341,10 +393,35 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
             ),
             if (widget.otherUserId != null)
               const PopupMenuItem<String>(
+                value: 'block',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.block_rounded,
+                      size: 18,
+                      color: Color(0xFFE57373),
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Block user',
+                      style: TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        color: Color(0xFFEEE0F0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (widget.otherUserId != null)
+              const PopupMenuItem<String>(
                 value: 'report',
                 child: Row(
                   children: [
-                    Icon(Icons.flag_rounded, size: 18, color: Color(0xFFC8556A)),
+                    Icon(
+                      Icons.flag_rounded,
+                      size: 18,
+                      color: Color(0xFFC8556A),
+                    ),
                     SizedBox(width: 10),
                     Text(
                       'Report user',
@@ -529,13 +606,30 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 3),
-            Text(
-              message.time,
-              style: const TextStyle(
-                fontFamily: 'Plus Jakarta Sans',
-                fontSize: 10,
-                color: Color(0xFF6B5870),
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  message.time,
+                  style: const TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 10,
+                    color: Color(0xFF6B5870),
+                  ),
+                ),
+                if (message.isMe) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    message.isRead
+                        ? Icons.done_all_rounded
+                        : Icons.done_rounded,
+                    size: 13,
+                    color: message.isRead
+                        ? const Color(0xFF55D6BE)
+                        : const Color(0xFF6B5870),
+                  ),
+                ],
+              ],
             ),
           ],
         ),

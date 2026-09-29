@@ -1,0 +1,336 @@
+const String kLocationOther = 'Other';
+const List<String> kStayDurationOptions = [
+  'Less than 1 year',
+  '1-3 years',
+  '3-5 years',
+  '5-10 years',
+  'More than 10 years',
+];
+const List<String> kStayReasonOptions = ['Job', 'Business', kLocationOther];
+const List<String> kIndianDistrictPreferenceOptions = [
+  'No district preference',
+  'Other district',
+];
+const List<String> kPartnerLocationModes = [
+  'India',
+  'Foreign country',
+  'Anywhere in the world',
+];
+const List<String> kPartnerCountries = [
+  'Australia',
+  'Bahrain',
+  'Bangladesh',
+  'Canada',
+  'France',
+  'Germany',
+  'Hong Kong',
+  'Ireland',
+  'Italy',
+  'Japan',
+  'Kuwait',
+  'Malaysia',
+  'Netherlands',
+  'New Zealand',
+  'Oman',
+  'Qatar',
+  'Saudi Arabia',
+  'Singapore',
+  'South Africa',
+  'Sri Lanka',
+  'United Arab Emirates',
+  'United Kingdom',
+  'United States',
+  'Other country',
+];
+
+const List<String> kMotherTongueOptions = [
+  'Assamese',
+  'Bengali',
+  'Bhojpuri',
+  'Gujarati',
+  'Hindi',
+  'Kannada',
+  'Kashmiri',
+  'Konkani',
+  'Maithili',
+  'Malayalam',
+  'Manipuri',
+  'Marathi',
+  'Nepali',
+  'Odia',
+  'Punjabi',
+  'Rajasthani',
+  'Sanskrit',
+  'Sindhi',
+  'Tamil',
+  'Telugu',
+  'Urdu',
+  'English',
+  'Other',
+];
+
+final List<String> kLanguagePreferenceOptions = [
+  ...kMotherTongueOptions.where((language) => language != 'Other'),
+  'No preference',
+];
+final List<String> kPartnerLanguageOptions = kLanguagePreferenceOptions
+    .where((language) => language != 'No preference')
+    .toList();
+
+const Map<String, List<String>> kIndianCitiesByState = {
+  'Andhra Pradesh': [
+    'Amaravati',
+    'Visakhapatnam',
+    'Vijayawada',
+    'Tirupati',
+    'Guntur',
+    'Nellore',
+    'Kurnool',
+    'Rajahmundry',
+    'Kakinada',
+  ],
+  'Arunachal Pradesh': ['Itanagar', 'Naharlagun', 'Tawang', 'Pasighat'],
+  'Assam': ['Guwahati', 'Dibrugarh', 'Silchar', 'Jorhat', 'Tezpur'],
+  'Bihar': ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur', 'Darbhanga'],
+  'Chhattisgarh': ['Raipur', 'Bhilai', 'Bilaspur', 'Durg', 'Korba'],
+  'Goa': ['Panaji', 'Margao', 'Vasco da Gama', 'Mapusa'],
+  'Gujarat': [
+    'Ahmedabad',
+    'Surat',
+    'Vadodara',
+    'Rajkot',
+    'Gandhinagar',
+    'Bhavnagar',
+    'Jamnagar',
+  ],
+  'Haryana': ['Gurugram', 'Faridabad', 'Panipat', 'Ambala', 'Hisar', 'Karnal'],
+  'Himachal Pradesh': ['Shimla', 'Dharamshala', 'Solan', 'Mandi'],
+  'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad', 'Bokaro', 'Deoghar'],
+  'Karnataka': [
+    'Bengaluru',
+    'Mysuru',
+    'Mangaluru',
+    'Hubballi',
+    'Dharwad',
+    'Belagavi',
+    'Shivamogga',
+  ],
+  'Kerala': [
+    'Thiruvananthapuram',
+    'Kochi',
+    'Kozhikode',
+    'Thrissur',
+    'Kollam',
+    'Kannur',
+  ],
+  'Madhya Pradesh': [
+    'Bhopal',
+    'Indore',
+    'Gwalior',
+    'Jabalpur',
+    'Ujjain',
+    'Sagar',
+  ],
+  'Maharashtra': [
+    'Mumbai',
+    'Pune',
+    'Nagpur',
+    'Nashik',
+    'Thane',
+    'Navi Mumbai',
+    'Kolhapur',
+    'Chhatrapati Sambhajinagar',
+  ],
+  'Manipur': ['Imphal', 'Thoubal', 'Churachandpur'],
+  'Meghalaya': ['Shillong', 'Tura', 'Jowai'],
+  'Mizoram': ['Aizawl', 'Lunglei', 'Champhai'],
+  'Nagaland': ['Kohima', 'Dimapur', 'Mokokchung'],
+  'Odisha': ['Bhubaneswar', 'Cuttack', 'Rourkela', 'Sambalpur', 'Puri'],
+  'Punjab': [
+    'Amritsar',
+    'Ludhiana',
+    'Jalandhar',
+    'Patiala',
+    'Bathinda',
+    'Mohali',
+  ],
+  'Rajasthan': ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota', 'Ajmer', 'Bikaner'],
+  'Sikkim': ['Gangtok', 'Namchi', 'Gyalshing'],
+  'Tamil Nadu': [
+    'Chennai',
+    'Coimbatore',
+    'Madurai',
+    'Tiruchirappalli',
+    'Salem',
+    'Tirunelveli',
+    'Erode',
+    'Vellore',
+  ],
+  'Telangana': ['Hyderabad', 'Warangal', 'Nizamabad', 'Karimnagar', 'Khammam'],
+  'Tripura': ['Agartala', 'Udaipur', 'Dharmanagar'],
+  'Uttar Pradesh': [
+    'Lucknow',
+    'Kanpur',
+    'Varanasi',
+    'Agra',
+    'Noida',
+    'Ghaziabad',
+    'Prayagraj',
+    'Gorakhpur',
+    'Meerut',
+  ],
+  'Uttarakhand': ['Dehradun', 'Haridwar', 'Rishikesh', 'Haldwani', 'Roorkee'],
+  'West Bengal': ['Kolkata', 'Howrah', 'Durgapur', 'Siliguri', 'Asansol'],
+  'Andaman and Nicobar Islands': ['Sri Vijaya Puram (Port Blair)', 'Diglipur'],
+  'Chandigarh': ['Chandigarh'],
+  'Dadra and Nagar Haveli and Daman and Diu': ['Silvassa', 'Daman', 'Diu'],
+  'Delhi': ['New Delhi', 'Delhi'],
+  'Jammu and Kashmir': ['Srinagar', 'Jammu', 'Anantnag', 'Baramulla'],
+  'Ladakh': ['Leh', 'Kargil'],
+  'Lakshadweep': ['Kavaratti', 'Agatti'],
+  'Puducherry': ['Puducherry', 'Karaikal', 'Mahe', 'Yanam'],
+};
+
+const Map<String, List<String>> kIndianDistrictsByState = {
+  'Andhra Pradesh': [
+    'Anantapur',
+    'Guntur',
+    'Krishna',
+    'Nellore',
+    'Tirupati',
+    'Visakhapatnam',
+  ],
+  'Assam': ['Cachar', 'Dibrugarh', 'Jorhat', 'Kamrup Metropolitan', 'Sonitpur'],
+  'Bihar': ['Bhagalpur', 'Gaya', 'Muzaffarpur', 'Patna', 'Purnia'],
+  'Delhi': [
+    'Central Delhi',
+    'East Delhi',
+    'New Delhi',
+    'South Delhi',
+    'West Delhi',
+  ],
+  'Gujarat': ['Ahmedabad', 'Kutch', 'Rajkot', 'Surat', 'Vadodara'],
+  'Haryana': ['Faridabad', 'Gurugram', 'Hisar', 'Karnal', 'Panipat'],
+  'Karnataka': [
+    'Bengaluru Urban',
+    'Dakshina Kannada',
+    'Mysuru',
+    'Udupi',
+    'Uttara Kannada',
+  ],
+  'Kerala': [
+    'Ernakulam',
+    'Kannur',
+    'Kollam',
+    'Kozhikode',
+    'Thiruvananthapuram',
+    'Thrissur',
+  ],
+  'Madhya Pradesh': ['Bhopal', 'Gwalior', 'Indore', 'Jabalpur', 'Ujjain'],
+  'Maharashtra': [
+    'Mumbai City',
+    'Mumbai Suburban',
+    'Nagpur',
+    'Nashik',
+    'Pune',
+    'Thane',
+  ],
+  'Odisha': ['Balasore', 'Cuttack', 'Ganjam', 'Khordha', 'Sundargarh'],
+  'Punjab': ['Amritsar', 'Jalandhar', 'Ludhiana', 'Patiala', 'SAS Nagar'],
+  'Rajasthan': ['Ajmer', 'Jaipur', 'Jodhpur', 'Kota', 'Udaipur'],
+  'Tamil Nadu': [
+    'Chennai',
+    'Coimbatore',
+    'Madurai',
+    'Salem',
+    'Tiruchirappalli',
+    'Tirunelveli',
+  ],
+  'Telangana': ['Hyderabad', 'Karimnagar', 'Khammam', 'Rangareddy', 'Warangal'],
+  'Uttar Pradesh': [
+    'Agra',
+    'Ghaziabad',
+    'Gautam Buddha Nagar',
+    'Kanpur Nagar',
+    'Lucknow',
+    'Varanasi',
+  ],
+  'Uttarakhand': [
+    'Dehradun',
+    'Haridwar',
+    'Nainital',
+    'Pauri Garhwal',
+    'Udham Singh Nagar',
+  ],
+  'West Bengal': [
+    'Darjeeling',
+    'Howrah',
+    'Kolkata',
+    'North 24 Parganas',
+    'South 24 Parganas',
+  ],
+};
+
+List<String> districtsForState(String? state) => [
+  ...(kIndianDistrictsByState[state] ?? const <String>[]),
+  'No district preference',
+  'Other district',
+];
+
+const List<String> kIndianStatesAndUnionTerritories = [
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chhattisgarh',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+  'Andaman and Nicobar Islands',
+  'Chandigarh',
+  'Dadra and Nagar Haveli and Daman and Diu',
+  'Delhi',
+  'Jammu and Kashmir',
+  'Ladakh',
+  'Lakshadweep',
+  'Puducherry',
+];
+
+List<String> citiesForState(String? state) {
+  final cities = kIndianCitiesByState[state] ?? const <String>[];
+  return [...cities, kLocationOther];
+}
+
+({String state, String city}) parseIndianPlace(String place) {
+  final parts = place.split(',').map((part) => part.trim()).toList();
+  if (parts.length > 1) {
+    final possibleState = parts.last;
+    if (kIndianCitiesByState.containsKey(possibleState)) {
+      return (
+        state: possibleState,
+        city: parts.sublist(0, parts.length - 1).join(', '),
+      );
+    }
+  }
+  return (state: '', city: place.trim());
+}

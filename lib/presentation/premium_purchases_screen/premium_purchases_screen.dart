@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../routes/app_routes.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/supabase_service.dart';
 
 class PremiumPurchasesScreen extends StatefulWidget {
@@ -39,13 +38,11 @@ class _PremiumPurchasesScreenState extends State<PremiumPurchasesScreen> {
     }
   }
 
-  void _openPremiumLandingPage(BuildContext context) {
-    context.push(AppRoutes.premiumLandingScreen);
-  }
-
-  void _openExternalPage() {
-    if (!mounted) return;
-    context.push(AppRoutes.premiumLandingScreen);
+  Future<void> _openExternalPage() async {
+    await launchUrl(
+      Uri.parse('https://www.alliancematrimony.online/features.html'),
+      mode: LaunchMode.externalApplication,
+    );
   }
 
   String _formatDate(String? isoString) {
@@ -391,7 +388,7 @@ class _PremiumPurchasesScreenState extends State<PremiumPurchasesScreen> {
                             ),
                           ),
                           child: const Text(
-                            'View Now',
+                            'View Details',
                             style: TextStyle(
                               fontFamily: 'Plus Jakarta Sans',
                               fontSize: 14,

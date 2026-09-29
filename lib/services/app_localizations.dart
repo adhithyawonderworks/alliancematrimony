@@ -71,6 +71,7 @@ class AppLocalizations extends ChangeNotifier {
       'unlock_profiles': 'Unlock All Profiles',
       'premium_required': 'Premium Required',
       'upgrade_premium': 'Upgrade to Premium',
+      'view_details': 'View Details',
       'premium_price': '₹500 • 2 Years Full Access',
       'years': 'yrs',
       'verified': 'Verified',
@@ -138,7 +139,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'App Language',
     },
     AppLanguage.hindi: {
-      'app_name': 'आदित्य मैट्रिमोनी',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'अपना जीवनसाथी खोजें',
       'login': 'लॉगिन',
       'sign_up': 'साइन अप',
@@ -174,6 +175,7 @@ class AppLocalizations extends ChangeNotifier {
       'unlock_profiles': 'सभी प्रोफ़ाइल अनलॉक करें',
       'premium_required': 'प्रीमियम आवश्यक',
       'upgrade_premium': 'प्रीमियम अपग्रेड करें',
+      'view_details': 'विवरण देखें',
       'premium_price': '₹500 • 2 साल की पूर्ण पहुंच',
       'years': 'वर्ष',
       'verified': 'सत्यापित',
@@ -237,7 +239,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'ऐप भाषा',
     },
     AppLanguage.tamil: {
-      'app_name': 'ஆதித்யா மேட்ரிமோனி',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'உங்கள் வாழ்க்கைத் துணையை கண்டறியுங்கள்',
       'login': 'உள்நுழைய',
       'sign_up': 'பதிவு செய்',
@@ -336,7 +338,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'ஆப் மொழி',
     },
     AppLanguage.telugu: {
-      'app_name': 'ఆదిత్య మాట్రిమోని',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'మీ జీవిత భాగస్వామిని కనుగొనండి',
       'login': 'లాగిన్',
       'sign_up': 'సైన్ అప్',
@@ -435,7 +437,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'యాప్ భాష',
     },
     AppLanguage.marathi: {
-      'app_name': 'आदित्य मॅट्रिमोनी',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'आपला जीवनसाथी शोधा',
       'login': 'लॉगिन',
       'sign_up': 'साइन अप',
@@ -534,7 +536,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'अॅप भाषा',
     },
     AppLanguage.kannada: {
-      'app_name': 'ಆದಿತ್ಯ ಮ್ಯಾಟ್ರಿಮೋನಿ',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'ನಿಮ್ಮ ಜೀವನ ಸಂಗಾತಿಯನ್ನು ಹುಡುಕಿ',
       'login': 'ಲಾಗಿನ್',
       'sign_up': 'ಸೈನ್ ಅಪ್',
@@ -633,7 +635,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'ಅಪ್ಲಿಕೇಶನ್ ಭಾಷೆ',
     },
     AppLanguage.malayalam: {
-      'app_name': 'ആദിത്യ മാട്രിമോണി',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'നിങ്ങളുടെ ജീവിത പങ്കാളിയെ കണ്ടെത്തൂ',
       'login': 'ലോഗിൻ',
       'sign_up': 'സൈൻ അപ്',
@@ -732,7 +734,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'ആപ്പ് ഭാഷ',
     },
     AppLanguage.gujarati: {
-      'app_name': 'આદિત્ય મેટ્રિમોની',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'તમારો જીવનસાથી શોધો',
       'login': 'લૉગિન',
       'sign_up': 'સાઇન અપ',
@@ -830,7 +832,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'ઍપ ભાષા',
     },
     AppLanguage.bengali: {
-      'app_name': 'আদিত্য ম্যাট্রিমোনি',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'আপনার জীবনসঙ্গী খুঁজুন',
       'login': 'লগইন',
       'sign_up': 'সাইন আপ',
@@ -929,7 +931,7 @@ class AppLocalizations extends ChangeNotifier {
       'app_language': 'অ্যাপ ভাষা',
     },
     AppLanguage.punjabi: {
-      'app_name': 'ਆਦਿਤਿਆ ਮੈਟ੍ਰਿਮੋਨੀ',
+      'app_name': 'Alliance Matrimony',
       'tagline': 'ਆਪਣਾ ਜੀਵਨ ਸਾਥੀ ਲੱਭੋ',
       'login': 'ਲੌਗਿਨ',
       'sign_up': 'ਸਾਈਨ ਅੱਪ',

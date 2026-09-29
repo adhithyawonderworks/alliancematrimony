@@ -9,6 +9,7 @@ import '../../../services/supabase_service.dart';
 
 // Signup steps enum
 enum _SignupStep {
+  agreement,
   emailEntry, // Step 1: enter email + password
   profileForm, // Step 2: fill full profile & create account
 }
@@ -38,6 +39,7 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  DateTime? _agreementAcceptedAt;
 
   // Signup step state
   _SignupStep _signupStep = _SignupStep.emailEntry;
@@ -52,6 +54,7 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
   @override
   void initState() {
     super.initState();
+    if (!widget.isLogin) _signupStep = _SignupStep.agreement;
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -61,6 +64,15 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
       curve: Curves.easeOutCubic,
     );
     _fadeController.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant AuthFormWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isLogin && !widget.isLogin) {
+      _agreementAcceptedAt = null;
+      _signupStep = _SignupStep.agreement;
+    }
   }
 
   @override
@@ -108,6 +120,10 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
 
     // Signup flow
     switch (_signupStep) {
+      case _SignupStep.agreement:
+        _agreementAcceptedAt = DateTime.now().toUtc();
+        _animateTransition(() => _signupStep = _SignupStep.emailEntry);
+        break;
       case _SignupStep.emailEntry:
         final email = _emailController.text.trim();
         final password = _passwordController.text;
@@ -128,6 +144,10 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
         final error = await SupabaseService.instance.signUpWithPassword(
           email,
           password,
+          metadata: {
+            'truthfulness_agreement_accepted_at': _agreementAcceptedAt
+                ?.toIso8601String(),
+          },
         );
         setState(() => _isLoading = false);
         if (error != null) {
@@ -138,14 +158,36 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
         break;
 
       case _SignupStep.profileForm:
+        if (!(_formKey.currentState?.validate() ?? false)) return;
+        if (_profileData['truthfulness_confirmed'] != true) {
+          _showError('Please confirm that your profile details are true.');
+          return;
+        }
+        final imageUrl = _profileData['image_url'] as String? ?? '';
+        if (_selectedProfileImage == null || !imageUrl.startsWith('http')) {
+          _showError('Please wait for your profile photo to finish uploading.');
+          return;
+        }
         setState(() => _isLoading = true);
         try {
-          if (_profileData.isNotEmpty) {
-            await SupabaseService.instance.upsertProfile(_profileData);
+          if (_profileData.isEmpty) {
+            throw Exception('Complete the profile form before continuing.');
           }
-        } catch (_) {
-          // Profile save failed silently — user can update later from My Profile
+          _profileData['truthfulness_confirmed_at'] = _agreementAcceptedAt
+              ?.toIso8601String();
+          await SupabaseService.instance.upsertProfile(_profileData);
+          await SupabaseService.instance.recordTruthfulnessSubmission(
+            acceptedAt: _agreementAcceptedAt!,
+            profileSnapshot: _profileData,
+          );
+        } catch (error) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            _showError(error.toString().replaceFirst('Exception: ', ''));
+          }
+          return;
         }
+        if (!mounted) return;
         setState(() => _isLoading = false);
         widget.onAuthSuccess();
         break;
@@ -175,6 +217,8 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
       return 'Login';
     }
     switch (_signupStep) {
+      case _SignupStep.agreement:
+        return 'Accept';
       case _SignupStep.emailEntry:
         return 'Create Account';
       case _SignupStep.profileForm:
@@ -207,18 +251,22 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildModeToggle(),
-                    const SizedBox(height: 24),
-                    if (!widget.isLogin) _buildSignupStepIndicator(),
-                    if (!widget.isLogin) const SizedBox(height: 20),
+                    if (_signupStep != _SignupStep.agreement) ...[
+                      _buildModeToggle(),
+                      const SizedBox(height: 24),
+                      if (!widget.isLogin) _buildSignupStepIndicator(),
+                      if (!widget.isLogin) const SizedBox(height: 20),
+                    ],
                     if (widget.isLogin)
                       _buildLoginContent()
                     else
                       _buildSignupStepContent(),
                     const SizedBox(height: 20),
                     if (_showSubmitButton) _buildSubmitButton(),
-                    const SizedBox(height: 16),
-                    _buildToggleLink(),
+                    if (_signupStep != _SignupStep.agreement) ...[
+                      const SizedBox(height: 16),
+                      _buildToggleLink(),
+                    ],
                   ],
                 ),
               ),
@@ -237,6 +285,9 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
 
     int activeIndex;
     switch (_signupStep) {
+      case _SignupStep.agreement:
+        activeIndex = 0;
+        break;
       case _SignupStep.emailEntry:
         activeIndex = 0;
         break;
@@ -359,6 +410,8 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
 
   Widget _buildSignupStepContent() {
     switch (_signupStep) {
+      case _SignupStep.agreement:
+        return _buildAgreementStep();
       case _SignupStep.emailEntry:
         return _buildEmailPasswordStep();
       case _SignupStep.profileForm:
@@ -367,18 +420,50 @@ class _AuthFormWidgetState extends State<AuthFormWidget>
           selectedImageFile: _selectedProfileImage,
           onImageChanged: (file) {
             setState(() => _selectedProfileImage = file);
-            if (file != null) {
-              _profileData['image_url'] = file.path;
-            }
           },
           onDataChanged: (data) {
             _profileData = data;
-            if (_selectedProfileImage != null) {
-              _profileData['image_url'] = _selectedProfileImage!.path;
-            }
           },
         );
     }
+  }
+
+  Widget _buildAgreementStep() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.fact_check_outlined, color: Color(0xFFC8556A), size: 30),
+          SizedBox(height: 16),
+          Text(
+            'Declaration of truthful information',
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFEEE0F0),
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'I agree that all details I provide in my profile are true and accurate to the best of my knowledge.',
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontSize: 14,
+              height: 1.6,
+              color: Color(0xFFB7A8BC),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _beginSignup() {
+    _agreementAcceptedAt = null;
+    widget.onToggleMode();
+    _animateTransition(() => _signupStep = _SignupStep.agreement);
   }
 
   Widget _buildEmailPasswordStep() {

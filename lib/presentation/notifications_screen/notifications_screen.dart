@@ -74,96 +74,98 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFC8556A),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFFC8556A)),
             )
           : _notifications.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
-                  itemCount: _notifications.length,
-                  itemBuilder: (context, index) {
-                    final item = _notifications[index];
-                    final title = (item['title'] ?? 'New update') as String;
-                    final message = (item['message'] ?? 'You have a new update.') as String;
-                    final createdAt = item['created_at'] as String?;
-                    final isUnread = item['is_read'] == false;
+          ? _buildEmptyState()
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+              itemCount: _notifications.length,
+              itemBuilder: (context, index) {
+                final item = _notifications[index];
+                final title = (item['title'] ?? 'New update') as String;
+                final message =
+                    (item['body'] ??
+                            item['message'] ??
+                            'You have a new update.')
+                        as String;
+                final createdAt = item['created_at'] as String?;
+                final isUnread = item['is_read'] == false;
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isUnread
-                            ? const Color(0xFF1E1520)
-                            : const Color(0xFF181118),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isUnread
+                        ? const Color(0xFF1E1520)
+                        : const Color(0xFF181118),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isUnread
+                          ? const Color(0xFFC8556A).withAlpha(100)
+                          : const Color(0xFF2A1E2E),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        margin: const EdgeInsets.only(top: 5, right: 10),
+                        decoration: BoxDecoration(
                           color: isUnread
-                              ? const Color(0xFFC8556A).withAlpha(100)
-                              : const Color(0xFF2A1E2E),
+                              ? const Color(0xFFC8556A)
+                              : const Color(0xFF6B5870),
+                          shape: BoxShape.circle,
                         ),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            margin: const EdgeInsets.only(top: 5, right: 10),
-                            decoration: BoxDecoration(
-                              color: isUnread
-                                  ? const Color(0xFFC8556A)
-                                  : const Color(0xFF6B5870),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        title,
-                                        style: const TextStyle(
-                                          fontFamily: 'Plus Jakarta Sans',
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFFEEE0F0),
-                                        ),
-                                      ),
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: const TextStyle(
+                                      fontFamily: 'Plus Jakarta Sans',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFEEE0F0),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _formatTimestamp(createdAt),
-                                      style: const TextStyle(
-                                        fontFamily: 'Plus Jakarta Sans',
-                                        fontSize: 11,
-                                        color: Color(0xFF9A8A9E),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(width: 8),
                                 Text(
-                                  message,
+                                  _formatTimestamp(createdAt),
                                   style: const TextStyle(
                                     fontFamily: 'Plus Jakarta Sans',
-                                    fontSize: 12,
-                                    color: Color(0xFFCCBDD0),
-                                    height: 1.5,
+                                    fontSize: 11,
+                                    color: Color(0xFF9A8A9E),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              message,
+                              style: const TextStyle(
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontSize: 12,
+                                color: Color(0xFFCCBDD0),
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../services/app_localizations.dart';
 import '../services/supabase_service.dart';
+import '../presentation/my_profile_screen/my_profile_screen.dart';
 
 class _TabSpec {
   final String labelKey;
@@ -74,7 +75,9 @@ class _AppNavigationState extends State<AppNavigation> {
     _loadPendingCount();
     _loadUnreadNotificationCount();
     _supabase.subscribeToInterests(onUpdate: _loadPendingCount);
-    _supabase.subscribeToNotifications(onNew: (_) => _loadUnreadNotificationCount());
+    _supabase.subscribeToNotifications(
+      onNew: (_) => _loadUnreadNotificationCount(),
+    );
   }
 
   @override
@@ -122,10 +125,17 @@ class _AppNavigationState extends State<AppNavigation> {
               children: List.generate(_tabs.length, (i) {
                 final tab = _tabs[i];
                 final isActive = i == _selectedVisualIndex;
-                final totalBadgeCount = _pendingInterestsCount + _unreadNotificationCount;
+                final totalBadgeCount =
+                    _pendingInterestsCount + _unreadNotificationCount;
                 final showBadge = i == 1 && totalBadgeCount > 0;
                 return GestureDetector(
-                  onTap: () {
+                  onTap: () async {
+                    if (widget.navigationShell.currentIndex == 4 &&
+                        tab.branchIndex != 4 &&
+                        !await MyProfileScreen.savePendingEdits()) {
+                      return;
+                    }
+                    if (!mounted) return;
                     setState(() => _selectedVisualIndex = i);
                     widget.navigationShell.goBranch(
                       tab.branchIndex!,

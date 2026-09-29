@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../services/app_localizations.dart';
 import '../../services/supabase_service.dart';
+import '../browse_profiles_screen/browse_profiles_screen.dart';
+import '../browse_profiles_screen/profile_details_screen.dart';
 
 class InterestsScreen extends StatefulWidget {
   const InterestsScreen({super.key});
@@ -22,6 +24,7 @@ class _InterestsScreenState extends State<InterestsScreen>
   List<Map<String, dynamic>> _sentInterests = [];
   bool _isLoadingReceived = true;
   bool _isLoadingSent = true;
+  bool _isPaid = false;
   RealtimeChannel? _interestsChannel;
 
   @override
@@ -46,7 +49,35 @@ class _InterestsScreenState extends State<InterestsScreen>
   }
 
   Future<void> _loadData() async {
-    await Future.wait([_loadReceived(), _loadSent()]);
+    await Future.wait([_loadReceived(), _loadSent(), _loadPaymentStatus()]);
+  }
+
+  Future<void> _loadPaymentStatus() async {
+    final myProfile = await _supabase.fetchProfile();
+    if (mounted) {
+      setState(() => _isPaid = myProfile?['is_paid'] == true);
+    }
+  }
+
+  void _openProfile(Map<String, dynamic> interest) {
+    final otherUserId = interest['other_user_id'] as String? ?? '';
+    final profileMap = interest['profile'] as Map<String, dynamic>? ?? {};
+    final profile = MatrimonyProfile.fromMap({
+      ...profileMap,
+      'user_id': otherUserId,
+    });
+    if (profile.id.isEmpty) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => ProfileDetailsScreen(
+          profile: profile,
+          isPaid: _isPaid,
+          hasInterest: true,
+          onInterest: () async {},
+        ),
+      ),
+    );
   }
 
   Future<void> _loadReceived() async {
@@ -363,6 +394,7 @@ class _InterestsScreenState extends State<InterestsScreen>
             formatTimestamp: _formatTimestamp,
             onAccept: () => _acceptInterest(interest['id'] as String),
             onDecline: () => _declineInterest(interest['id'] as String),
+            onTap: () => _openProfile(interest),
           );
         },
       ),
@@ -393,6 +425,7 @@ class _InterestsScreenState extends State<InterestsScreen>
             formatTimestamp: _formatTimestamp,
             onAccept: () {},
             onDecline: () {},
+            onTap: () => _openProfile(interest),
           );
         },
       ),
@@ -462,6 +495,7 @@ class _InterestCard extends StatelessWidget {
   final String Function(String?) formatTimestamp;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
+  final VoidCallback? onTap;
 
   const _InterestCard({
     required this.interest,
@@ -469,6 +503,7 @@ class _InterestCard extends StatelessWidget {
     required this.formatTimestamp,
     required this.onAccept,
     required this.onDecline,
+    this.onTap,
   });
 
   @override
@@ -541,7 +576,10 @@ class _InterestCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Profile photo
@@ -772,6 +810,7 @@ class _InterestCard extends StatelessWidget {
                   ),
                 ),
               ],
+              ),
             ),
             // Message if present
             if (message.isNotEmpty) ...[

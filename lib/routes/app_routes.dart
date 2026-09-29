@@ -9,6 +9,7 @@ import '../presentation/sign_up_login_screen/sign_up_login_screen.dart';
 import '../presentation/chat_screen/chat_screen.dart';
 import '../presentation/premium_landing_screen/premium_landing_screen.dart';
 import '../presentation/premium_purchases_screen/premium_purchases_screen.dart';
+import '../presentation/payment_result_screen/payment_result_screen.dart';
 import '../presentation/notifications_screen/notifications_screen.dart';
 import '../widgets/app_scaffold.dart';
 
@@ -23,6 +24,7 @@ class AppRoutes {
   static const String notificationsScreen = '/notifications-screen';
   static const String premiumLandingScreen = '/premium-landing-screen';
   static const String premiumPurchasesScreen = '/premium-purchases-screen';
+  static const String paymentResultScreen = '/payment-result-screen';
 }
 
 final GoRouter appRouter = GoRouter(
@@ -182,6 +184,13 @@ final GoRouter appRouter = GoRouter(
           );
         },
       ),
+    ),
+    GoRoute(
+      path: AppRoutes.paymentResultScreen,
+      builder: (context, state) {
+        final status = state.uri.queryParameters['status'];
+        return PaymentResultScreen(success: status == 'success');
+      },
     ),
   ],
 );

@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'web/homepage.html'
+      - 'web/features.html'
       - 'web/site.css'
       - 'web/terms.html'
       - 'web/privacy.html'
@@ -41,6 +42,7 @@ jobs:
         run: |
           mkdir -p _site/assets/images
           cp web/homepage.html _site/index.html
+          cp web/features.html _site/features.html
           cp web/delete-account.html _site/delete-account.html
           cp web/terms.html _site/terms.html
           cp web/privacy.html _site/privacy.html

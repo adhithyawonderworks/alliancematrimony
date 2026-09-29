@@ -2,9 +2,8 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../routes/app_routes.dart';
 import '../../services/app_localizations.dart';
 import '../../services/supabase_service.dart';
 import './chat_conversation_screen.dart';
@@ -525,7 +524,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
               child: Container(color: const Color(0xFF120D16).withAlpha(120)),
             ),
           ),
@@ -589,7 +588,10 @@ class _ChatScreenState extends State<ChatScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => context.push(AppRoutes.premiumPurchasesScreen),
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://www.alliancematrimony.online/features.html'),
+                    mode: LaunchMode.externalApplication,
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC8556A),
                     foregroundColor: Colors.white,
@@ -600,7 +602,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   child: const Text(
-                    'Upgrade to Premium',
+                    'View Details',
                     style: TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 15,

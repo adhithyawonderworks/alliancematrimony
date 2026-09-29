@@ -420,13 +420,18 @@ class ProfileHeroWidget extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                '${profile.firstName} ${profile.lastName.isNotEmpty ? '${profile.lastName[0]}***' : ''}',
-                                style: const TextStyle(
-                                  fontFamily: 'Plus Jakarta Sans',
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFFEEE0F0),
+                              Flexible(
+                                child: Text(
+                                  profile.aadharVerified && profile.aadharName.isNotEmpty
+                                      ? '${profile.firstName} ${profile.lastName.isNotEmpty ? '${profile.lastName[0]}***' : ''} (${profile.aadharName})'
+                                      : '${profile.firstName} ${profile.lastName.isNotEmpty ? '${profile.lastName[0]}***' : ''}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'Plus Jakarta Sans',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFEEE0F0),
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 6),

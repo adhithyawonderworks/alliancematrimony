@@ -1,26 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class PremiumLandingScreen extends StatelessWidget {
+class PremiumLandingScreen extends StatefulWidget {
   const PremiumLandingScreen({super.key});
 
-  Future<void> _openExternalPage(BuildContext context) async {
-    const url = 'https://example.com';
-    final uri = Uri.parse(url);
+  @override
+  State<PremiumLandingScreen> createState() => _PremiumLandingScreenState();
+}
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-      return;
-    }
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Dummy premium website preview is not available on this device.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+class _PremiumLandingScreenState extends State<PremiumLandingScreen> {
+  Future<void> _openFeaturesPage() async {
+    await launchUrl(
+      Uri.parse('https://www.alliancematrimony.online/features.html'),
+      mode: LaunchMode.externalApplication,
+    );
   }
 
   @override
@@ -93,7 +86,7 @@ class PremiumLandingScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () => _openExternalPage(context),
+                  onPressed: _openFeaturesPage,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC8556A),
                     foregroundColor: Colors.white,
@@ -108,7 +101,7 @@ class PremiumLandingScreen extends StatelessWidget {
                       Icon(Icons.open_in_new_rounded, size: 20),
                       SizedBox(width: 10),
                       Text(
-                        'View Now',
+                        'View Details',
                         style: TextStyle(
                           fontFamily: 'Plus Jakarta Sans',
                           fontSize: 16,

@@ -1,8 +1,10 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../routes/app_routes.dart';
 import '../../services/app_localizations.dart';
 import '../../services/supabase_service.dart';
 import '../chat_screen/chat_conversation_screen.dart';
@@ -625,7 +627,9 @@ class _MatchesScreenState extends State<MatchesScreen>
               ),
             ),
             const SizedBox(height: 24),
-            Container(
+            GestureDetector(
+              onTap: () => context.go(AppRoutes.browseProfilesScreen),
+              child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -641,6 +645,7 @@ class _MatchesScreenState extends State<MatchesScreen>
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
+              ),
               ),
             ),
           ],

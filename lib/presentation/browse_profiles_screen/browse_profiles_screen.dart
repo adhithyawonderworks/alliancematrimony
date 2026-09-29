@@ -2,10 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../services/supabase_service.dart';
 import '../../widgets/empty_state_widget.dart';
 import './widgets/browse_filter_chips_widget.dart';
 import './widgets/payment_unlock_banner_widget.dart';
 import './widgets/profile_card_widget.dart';
+import './profile_details_screen.dart';
 
 class MatrimonyProfile {
   final String id;
@@ -23,6 +25,8 @@ class MatrimonyProfile {
   final bool isNew;
   final String education;
   final String motherTongue;
+  final String horoscopeStar;
+  final bool addressVerified;
 
   const MatrimonyProfile({
     required this.id,
@@ -40,27 +44,37 @@ class MatrimonyProfile {
     required this.isNew,
     required this.education,
     required this.motherTongue,
+    required this.horoscopeStar,
+    required this.addressVerified,
   });
 
-  String get displayName => '$firstName ${maskedLastName[0]}***';
+  String get displayName =>
+      maskedLastName.isEmpty ? firstName : '$firstName ${maskedLastName[0]}***';
 
   factory MatrimonyProfile.fromMap(Map<String, dynamic> map) {
+    final lastName = (map['last_name'] ?? '').toString();
     return MatrimonyProfile(
-      id: map['id'] as String,
-      firstName: map['firstName'] as String,
-      maskedLastName: map['maskedLastName'] as String,
-      age: map['age'] as int,
-      job: map['job'] as String,
-      place: map['place'] as String,
-      heightCm: map['heightCm'] as String,
-      religion: map['religion'] as String,
-      caste: map['caste'] as String,
-      imageUrl: map['imageUrl'] as String,
-      semanticLabel: map['semanticLabel'] as String,
-      isVerified: map['isVerified'] as bool,
-      isNew: map['isNew'] as bool,
-      education: map['education'] as String,
-      motherTongue: map['motherTongue'] as String,
+      id: (map['user_id'] ?? '').toString(),
+      firstName: (map['first_name'] ?? '').toString(),
+      maskedLastName: lastName,
+      age: int.tryParse((map['age'] ?? 0).toString()) ?? 0,
+      job: (map['job'] ?? '').toString(),
+      place: (map['place'] ?? '').toString(),
+      heightCm: (map['height_cm'] ?? '').toString(),
+      religion: (map['religion'] ?? '').toString(),
+      caste: (map['caste'] ?? '').toString(),
+      imageUrl: (map['image_url'] ?? '').toString(),
+      semanticLabel: 'Profile photo of ${(map['first_name'] ?? 'member')}',
+      isVerified: map['is_verified'] == true,
+      isNew:
+          DateTime.tryParse(
+            (map['created_at'] ?? '').toString(),
+          )?.isAfter(DateTime.now().subtract(const Duration(days: 14))) ??
+          false,
+      education: (map['education'] ?? '').toString(),
+      motherTongue: (map['mother_tongue'] ?? '').toString(),
+      horoscopeStar: (map['horoscope_star'] ?? '').toString(),
+      addressVerified: map['address_verified'] == true,
     );
   }
 }
@@ -77,8 +91,14 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
   bool _isPaid = false;
   bool _isLoading = true;
   bool _showSearchBar = false;
+  bool _recommendedOnly = true;
+  bool _savedOnly = false;
+  RangeValues _ageRange = const RangeValues(18, 60);
   String _activeFilter = 'All';
   String _searchQuery = '';
+  Set<String> _savedProfileIds = {};
+  Set<String> _sentInterestIds = {};
+  Map<String, dynamic> _myPreferences = {};
   static const List<String> _filterOptions = [
     'All',
     'New',
@@ -87,8 +107,7 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
     'Christian',
     'Muslim',
   ];
-  final List<String> _sentInterests = [];
-  late List<MatrimonyProfile> _profiles;
+  List<MatrimonyProfile> _profiles = [];
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -251,10 +270,94 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
   @override
   void initState() {
     super.initState();
-    _profiles = _profileMaps.map(MatrimonyProfile.fromMap).toList();
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) setState(() => _isLoading = false);
+    _loadProfiles();
+  }
+
+  Future<void> _loadProfiles() async {
+    final service = SupabaseService.instance;
+    final results = await Future.wait([
+      service.discoverProfiles(),
+      service.fetchSavedProfileIds(),
+      service.fetchSentInterests(),
+      service.fetchProfile(),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      _profiles = (results[0] as List<Map<String, dynamic>>)
+          .map(MatrimonyProfile.fromMap)
+          .where((profile) => profile.id.isNotEmpty)
+          .toList();
+      _savedProfileIds = results[1] as Set<String>;
+      _sentInterestIds = (results[2] as List<Map<String, dynamic>>)
+          .map((interest) => (interest['receiver_id'] ?? '').toString())
+          .toSet();
+      _myPreferences = results[3] as Map<String, dynamic>? ?? {};
+      _isPaid = _myPreferences['is_paid'] == true;
+      _isLoading = false;
     });
+  }
+
+  int _recommendationScore(MatrimonyProfile profile) {
+    var score = 0;
+    final religion = (_myPreferences['partner_religion'] ?? '').toString();
+    final place = (_myPreferences['partner_place'] ?? '').toString();
+    final ageRange = (_myPreferences['partner_age_range'] ?? '').toString();
+    if (religion.isNotEmpty &&
+        profile.religion.toLowerCase() == religion.toLowerCase()) {
+      score += 3;
+    }
+    if (place.isNotEmpty &&
+        profile.place.toLowerCase().contains(place.toLowerCase())) {
+      score += 2;
+    }
+    final ages = RegExp(
+      r'\d+',
+    ).allMatches(ageRange).map((match) => int.parse(match.group(0)!)).toList();
+    if (ages.length >= 2 && profile.age >= ages[0] && profile.age <= ages[1]) {
+      score += 2;
+    }
+    if (profile.isVerified) score++;
+    final ownStar = (_myPreferences['horoscope_star'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    if (ownStar.isNotEmpty &&
+        profile.horoscopeStar.trim().toLowerCase() == ownStar) {
+      score += 3;
+    }
+    return score;
+  }
+
+  Future<void> _toggleSaved(MatrimonyProfile profile) async {
+    final willSave = !_savedProfileIds.contains(profile.id);
+    final success = await SupabaseService.instance.setProfileSaved(
+      profile.id,
+      saved: willSave,
+    );
+    if (!mounted || !success) return;
+    setState(() {
+      if (willSave) {
+        _savedProfileIds.add(profile.id);
+      } else {
+        _savedProfileIds.remove(profile.id);
+      }
+    });
+  }
+
+  Future<void> _sendInterest(MatrimonyProfile profile) async {
+    if (_sentInterestIds.contains(profile.id)) return;
+    final success = await SupabaseService.instance.sendInterest(profile.id);
+    if (!mounted) return;
+    if (success) {
+      setState(() => _sentInterestIds.add(profile.id));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Interest sent')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to send interest. Try again.')),
+      );
+    }
   }
 
   @override
@@ -269,12 +372,25 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
     final query = _searchQuery.trim().toLowerCase();
     Iterable<MatrimonyProfile> results = _profiles;
 
+    if (_savedOnly) {
+      results = results.where(
+        (profile) => _savedProfileIds.contains(profile.id),
+      );
+    }
+
     if (_activeFilter == 'New') {
       results = results.where((p) => p.isNew);
     } else if (_activeFilter == 'Verified') {
       results = results.where((p) => p.isVerified);
     } else if (_activeFilter != 'All') {
       results = results.where((p) => p.religion == _activeFilter);
+    }
+
+    if (_ageRange.start > 18 || _ageRange.end < 60) {
+      results = results.where(
+        (profile) =>
+            profile.age >= _ageRange.start && profile.age <= _ageRange.end,
+      );
     }
 
     if (query.isNotEmpty) {
@@ -294,7 +410,13 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
       });
     }
 
-    return results.toList();
+    final profiles = results.toList();
+    if (_recommendedOnly) {
+      profiles.sort(
+        (a, b) => _recommendationScore(b).compareTo(_recommendationScore(a)),
+      );
+    }
+    return profiles;
   }
 
   void _toggleSearchBar() {
@@ -341,6 +463,21 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
                 ),
               ),
               const SizedBox(height: 14),
+              Text(
+                'Age ${_ageRange.start.round()} - ${_ageRange.end.round()}',
+                style: const TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  color: Color(0xFFCCBDD0),
+                ),
+              ),
+              RangeSlider(
+                values: _ageRange,
+                min: 18,
+                max: 60,
+                divisions: 42,
+                activeColor: const Color(0xFFC8556A),
+                onChanged: (value) => setState(() => _ageRange = value),
+              ),
               Wrap(
                 spacing: 8,
                 runSpacing: 10,
@@ -413,17 +550,44 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
         color: const Color(0xFFC8556A),
         backgroundColor: const Color(0xFF1E1520),
         onRefresh: () async {
-          // TODO: Replace with [Riverpod/Bloc] profile refresh
-          await Future.delayed(const Duration(milliseconds: 800));
+          await _loadProfiles();
         },
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
             _buildGlassAppBar(),
             SliverToBoxAdapter(
-              child: BrowseFilterChipsWidget(
-                activeFilter: _activeFilter,
-                onFilterChanged: (f) => setState(() => _activeFilter = f),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: Row(
+                      children: [
+                        FilterChip(
+                          label: const Text('Recommended'),
+                          selected: _recommendedOnly,
+                          onSelected: (value) => setState(() {
+                            _recommendedOnly = value;
+                            if (value) _savedOnly = false;
+                          }),
+                        ),
+                        const SizedBox(width: 8),
+                        FilterChip(
+                          label: const Text('Saved'),
+                          selected: _savedOnly,
+                          onSelected: (value) => setState(() {
+                            _savedOnly = value;
+                            if (value) _recommendedOnly = false;
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  BrowseFilterChipsWidget(
+                    activeFilter: _activeFilter,
+                    onFilterChanged: (f) => setState(() => _activeFilter = f),
+                  ),
+                ],
               ),
             ),
             if (_showSearchBar)
@@ -502,6 +666,7 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
                   onCta: () {
                     setState(() {
                       _activeFilter = 'All';
+                      _ageRange = const RangeValues(18, 60);
                       _searchQuery = '';
                       _searchController.clear();
                     });
@@ -523,7 +688,7 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
       backgroundColor: Colors.transparent,
       flexibleSpace: ClipRect(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
           child: Container(
             decoration: BoxDecoration(
               color: const Color(0xFF120D16).withAlpha(179),
@@ -560,7 +725,7 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
                         text: const TextSpan(
                           children: [
                             TextSpan(
-                              text: 'Adithya',
+                              text: 'Alliance Matrimony',
                               style: TextStyle(
                                 fontFamily: 'Plus Jakarta Sans',
                                 fontSize: 18,
@@ -583,7 +748,9 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
                     ),
                     IconButton(
                       icon: Icon(
-                        _showSearchBar ? Icons.search_off_rounded : Icons.search_rounded,
+                        _showSearchBar
+                            ? Icons.search_off_rounded
+                            : Icons.search_rounded,
                         color: const Color(0xFFEEE0F0),
                         size: 22,
                       ),
@@ -619,15 +786,37 @@ class _BrowseProfilesScreenState extends State<BrowseProfilesScreen> {
             index: index,
             profile: profile,
             isPaid: _isPaid,
-            hasInterest: _sentInterests.contains(profile.id),
-            onInterest: () {
-              setState(() {
-                if (_sentInterests.contains(profile.id)) {
-                  _sentInterests.remove(profile.id);
-                } else {
-                  _sentInterests.add(profile.id);
-                }
-              });
+            hasInterest: _sentInterestIds.contains(profile.id),
+            isSaved: _savedProfileIds.contains(profile.id),
+            onInterest: () => _sendInterest(profile),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => ProfileDetailsScreen(
+                  profile: profile,
+                  isPaid: _isPaid,
+                  hasInterest: _sentInterestIds.contains(profile.id),
+                  onInterest: () => _sendInterest(profile),
+                ),
+              ),
+            ),
+            onSave: () => _toggleSaved(profile),
+            onBlock: () async {
+              final success = await SupabaseService.instance.blockUser(
+                profile.id,
+              );
+              if (!mounted) return;
+              if (success) {
+                setState(
+                  () => _profiles.removeWhere((item) => item.id == profile.id),
+                );
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success ? 'Profile blocked' : 'Unable to block profile',
+                  ),
+                ),
+              );
             },
           );
         }, childCount: _filteredProfiles.length),
@@ -713,14 +902,22 @@ class _AnimatedProfileCard extends StatefulWidget {
   final MatrimonyProfile profile;
   final bool isPaid;
   final bool hasInterest;
+  final bool isSaved;
   final VoidCallback onInterest;
+  final VoidCallback onTap;
+  final VoidCallback onSave;
+  final VoidCallback onBlock;
 
   const _AnimatedProfileCard({
     required this.index,
     required this.profile,
     required this.isPaid,
     required this.hasInterest,
+    required this.isSaved,
     required this.onInterest,
+    required this.onTap,
+    required this.onSave,
+    required this.onBlock,
   });
 
   @override
@@ -774,6 +971,10 @@ class _AnimatedProfileCardState extends State<_AnimatedProfileCard>
           isPaid: widget.isPaid,
           hasInterest: widget.hasInterest,
           onInterest: widget.onInterest,
+          onTap: widget.onTap,
+          isSaved: widget.isSaved,
+          onSave: widget.onSave,
+          onBlock: widget.onBlock,
         ),
       ),
     );

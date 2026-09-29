@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../services/app_localizations.dart';
 
 class LanguageSettingsWidget extends StatefulWidget {
-  const LanguageSettingsWidget({super.key});
+  final VoidCallback? onSettingsTap;
+
+  const LanguageSettingsWidget({super.key, this.onSettingsTap});
 
   @override
   State<LanguageSettingsWidget> createState() => _LanguageSettingsWidgetState();
@@ -51,7 +53,10 @@ class _LanguageSettingsWidgetState extends State<LanguageSettingsWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
+          InkWell(
+            onTap: widget.onSettingsTap,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               children: [
@@ -69,16 +74,25 @@ class _LanguageSettingsWidgetState extends State<LanguageSettingsWidget> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  _localizations.get('settings'),
-                  style: const TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFEEE0F0),
+                Expanded(
+                  child: Text(
+                    _localizations.get('settings'),
+                    style: const TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFEEE0F0),
+                    ),
                   ),
                 ),
+                if (widget.onSettingsTap != null)
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: Color(0xFF6B5870),
+                  ),
               ],
+            ),
             ),
           ),
           const Divider(color: Color(0x1AFFFFFF), height: 1),
