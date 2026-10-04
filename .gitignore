@@ -40,6 +40,7 @@ supabase/.temp/
 test_result*
 /web/*
 !/web/delete-account.html
+!/web/admin-recover.html
 !/web/CNAME
 !/web/payu_checkout.js
 

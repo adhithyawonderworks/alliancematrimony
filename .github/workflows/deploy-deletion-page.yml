@@ -10,7 +10,9 @@ on:
       - 'web/terms.html'
       - 'web/privacy.html'
       - 'web/refunds.html'
+      - 'web/ref/index.html'
       - 'web/delete-account.html'
+      - 'web/admin-recover.html'
       - 'assets/images/alliance_app_icon.png'
       - 'web/CNAME'
       - '.github/workflows/deploy-deletion-page.yml'
@@ -44,9 +46,12 @@ jobs:
           cp web/homepage.html _site/index.html
           cp web/features.html _site/features.html
           cp web/delete-account.html _site/delete-account.html
+          cp web/admin-recover.html _site/admin-recover.html
           cp web/terms.html _site/terms.html
           cp web/privacy.html _site/privacy.html
           cp web/refunds.html _site/refunds.html
+          mkdir -p _site/ref
+          cp web/ref/index.html _site/ref/index.html
           cp web/site.css _site/site.css
           cp assets/images/alliance_app_icon.png _site/assets/images/alliance_app_icon.png
           cp web/CNAME _site/CNAME

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Reset admin password | Alliance Matrimony</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #21151e;
+      --muted: #705e67;
+      --rose: #8d3048;
+      --rose-light: #f8e9e8;
+      --line: #e5d5d4;
+      --paper: #fffaf7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--ink);
+      background: radial-gradient(circle at 12% 4%, #f8d7d1 0, transparent 34%), #f4ece7;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    main { width: min(100%, 460px); }
+    .brand { color: var(--rose); font: 700 12px/1.2 Arial, sans-serif; text-transform: uppercase; }
+    h1 { margin: 16px 0 8px; font-size: 38px; line-height: 1.05; font-weight: 500; }
+    .intro, #status { color: var(--muted); font: 15px/1.55 Arial, sans-serif; }
+    form { margin-top: 28px; padding: 24px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+    label { display: block; margin: 0 0 7px; font: 700 13px Arial, sans-serif; }
+    input { width: 100%; margin: 0 0 18px; padding: 13px 14px; border: 1px solid #cdbabb; border-radius: 6px; font: 16px Arial, sans-serif; }
+    button { width: 100%; padding: 14px; border: 0; border-radius: 6px; color: white; background: var(--rose); font: 700 15px Arial, sans-serif; cursor: pointer; }
+    button:disabled { opacity: .65; cursor: wait; }
+    #status { min-height: 24px; margin: 16px 0 0; }
+    #status.error { color: #a52222; }
+    #reset-form[hidden] { display: none; }
+    footer { margin-top: 18px; color: var(--muted); font: 12px/1.5 Arial, sans-serif; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <main>
+    <div class="brand">Alliance Matrimony · Admin</div>
+    <h1>Choose a new password</h1>
+    <p class="intro">Use a unique password for your admin account. After it is updated, return to the admin app and sign in again.</p>
+    <form id="request-form" hidden>
+      <label for="email">Admin account email</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <button id="request-submit" type="submit">Send recovery link</button>
+    </form>
+    <form id="reset-form" hidden>
+      <label for="password">New password</label>
+      <input id="password" type="password" autocomplete="new-password" minlength="8" required>
+      <label for="confirm-password">Confirm new password</label>
+      <input id="confirm-password" type="password" autocomplete="new-password" minlength="8" required>
+      <button id="submit" type="submit">Update password</button>
+    </form>
+    <p id="status" role="status" aria-live="polite">Checking your recovery link…</p>
+    <footer>Recovery links expire and can only be used once. Request a new link from the admin app if this one has expired.</footer>
+  </main>
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://dsvapacndcszdgmvyaub.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdmFwYWNuZGNzemRnbXZ5YXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTQ3NDksImV4cCI6MjA5OTc5MDc0OX0.fDpPlp9nmdtgbkdADlx-9pALvZxDIftKlwYkxvSHSxA',
+      { auth: { detectSessionInUrl: true } }
+    );
+    const status = document.getElementById('status');
+    const requestForm = document.getElementById('request-form');
+    const form = document.getElementById('reset-form');
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const query = new URLSearchParams(window.location.search);
+    const linkError = params.get('error_description') || query.get('error_description');
+
+    function showError(message) {
+      status.textContent = message;
+      status.classList.add('error');
+    }
+
+    async function initializeRecovery() {
+      if (linkError) {
+        showError(linkError);
+        requestForm.hidden = false;
+        return;
+      }
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) {
+        status.textContent = 'Enter your account email and we will send a recovery link.';
+        requestForm.hidden = false;
+        return;
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+      status.textContent = 'Recovery verified. Set your new password below.';
+      requestForm.hidden = true;
+      form.hidden = false;
+    }
+
+    document.getElementById('email').value = new URLSearchParams(window.location.search).get('email') || '';
+    requestForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = document.getElementById('request-submit');
+      button.disabled = true;
+      button.textContent = 'Sending…';
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        document.getElementById('email').value.trim(),
+        { redirectTo: window.location.origin + window.location.pathname }
+      );
+      if (error) {
+        showError(error.message);
+        button.disabled = false;
+        button.textContent = 'Send recovery link';
+        return;
+      }
+      status.classList.remove('error');
+      status.textContent = 'If that account exists, a recovery link has been sent. Open it in this browser.';
+      requestForm.hidden = true;
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const password = document.getElementById('password').value;
+      const confirmation = document.getElementById('confirm-password').value;
+      const button = document.getElementById('submit');
+      if (password !== confirmation) {
+        showError('The passwords do not match.');
+        return;
+      }
+      button.disabled = true;
+      button.textContent = 'Updating…';
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        showError(error.message);
+        button.disabled = false;
+        button.textContent = 'Update password';
+        return;
+      }
+      form.hidden = true;
+      status.classList.remove('error');
+      status.textContent = 'Password updated. Return to the admin app and sign in with your new password.';
+    });
+
+    initializeRecovery().catch(() => showError('Unable to verify this link. Request a fresh link in the admin app.'));
+  </script>
+</body>
+</html>
