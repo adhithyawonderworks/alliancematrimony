@@ -63,7 +63,7 @@
     <footer>Recovery links expire and can only be used once. Request a new link from the admin app if this one has expired.</footer>
   </main>
   <script>
-    const supabase = window.supabase.createClient(
+    const supabaseClient = window.supabase.createClient(
       'https://dsvapacndcszdgmvyaub.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdmFwYWNuZGNzemRnbXZ5YXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTQ3NDksImV4cCI6MjA5OTc5MDc0OX0.fDpPlp9nmdtgbkdADlx-9pALvZxDIftKlwYkxvSHSxA',
       { auth: { detectSessionInUrl: true } }
@@ -86,7 +86,7 @@
         requestForm.hidden = false;
         return;
       }
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await supabaseClient.auth.getSession();
       if (error || !data.session) {
         status.textContent = 'Enter your account email and we will send a recovery link.';
         requestForm.hidden = false;
@@ -104,7 +104,7 @@
       const button = document.getElementById('request-submit');
       button.disabled = true;
       button.textContent = 'Sending…';
-      const { error } = await supabase.auth.resetPasswordForEmail(
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(
         document.getElementById('email').value.trim(),
         { redirectTo: window.location.origin + window.location.pathname }
       );
@@ -130,7 +130,7 @@
       }
       button.disabled = true;
       button.textContent = 'Updating…';
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabaseClient.auth.updateUser({ password });
       if (error) {
         showError(error.message);
         button.disabled = false;
