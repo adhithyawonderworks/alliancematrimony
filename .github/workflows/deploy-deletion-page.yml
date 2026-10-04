@@ -10,7 +10,6 @@ on:
       - 'web/terms.html'
       - 'web/privacy.html'
       - 'web/refunds.html'
-      - 'web/ref/index.html'
       - 'web/delete-account.html'
       - 'web/admin-recover.html'
       - 'assets/images/alliance_app_icon.png'
@@ -50,8 +49,6 @@ jobs:
           cp web/terms.html _site/terms.html
           cp web/privacy.html _site/privacy.html
           cp web/refunds.html _site/refunds.html
-          mkdir -p _site/ref
-          cp web/ref/index.html _site/ref/index.html
           cp web/site.css _site/site.css
           cp assets/images/alliance_app_icon.png _site/assets/images/alliance_app_icon.png
           cp web/CNAME _site/CNAME
