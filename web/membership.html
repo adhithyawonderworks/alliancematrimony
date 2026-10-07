@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#24101f" />
+    <title>Alliance Matrimony | Get your membership</title>
+    <link rel="icon" type="image/png" href="../assets/images/alliance_app_icon.png" />
+    <style>
+      :root { --ink:#24101f; --berry:#9d3155; --coral:#ec6b72; --gold:#f5d76e; --muted:#cdbcc8; }
+      * { box-sizing: border-box; }
+      body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+        font-family:"Aptos","Segoe UI",Arial,sans-serif; color:#fff;
+        background: radial-gradient(circle at 15% 10%, #7a2a52 0, transparent 45%),
+                    radial-gradient(circle at 85% 90%, #c8556a 0, transparent 40%), #1b0d1a; }
+      .card { width:min(480px,100%); padding:34px 30px; border-radius:24px; background:rgba(36,16,31,.82);
+        border:1px solid rgba(245,215,110,.25); box-shadow:0 30px 80px rgba(0,0,0,.45); backdrop-filter:blur(14px); }
+      .brand { display:flex; align-items:center; gap:12px; margin-bottom:22px; font-weight:700; font-size:18px; }
+      .brand img { width:44px; height:44px; border-radius:12px; }
+      .brand span b { color:var(--gold); font-weight:600; }
+      h1 { margin:0 0 8px; font-family:Georgia,serif; font-weight:500; font-size:30px; }
+      p { color:var(--muted); line-height:1.6; font-size:15px; margin:0 0 18px; }
+      .price { margin:18px 0; padding:20px; border-radius:16px; text-align:center;
+        background:linear-gradient(135deg, rgba(200,85,106,.35), rgba(232,168,124,.2)); border:1px solid rgba(245,215,110,.35); }
+      .price strong { display:block; font-family:Georgia,serif; font-size:46px; color:var(--gold); font-weight:500; }
+      .price span { color:var(--muted); font-size:13px; }
+      ul { margin:0 0 20px; padding:0; list-style:none; }
+      li { padding:7px 0 7px 26px; position:relative; color:#f3e7ee; font-size:14px; }
+      li::before { content:"\2713"; position:absolute; left:0; color:var(--gold); }
+      label { display:block; margin:14px 0 6px; font-size:12px; font-weight:700; color:var(--muted); }
+      input { width:100%; padding:13px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.2);
+        background:rgba(255,255,255,.08); color:#fff; font-size:16px; }
+      .phone { display:flex; gap:8px; }
+      .phone .cc { width:64px; flex:none; text-align:center; padding-left:0; padding-right:0; }
+      button { width:100%; margin-top:20px; padding:15px; border:0; border-radius:14px; cursor:pointer;
+        background:linear-gradient(135deg,#c8556a,#e8a87c); color:#fff; font-size:16px; font-weight:700; }
+      button:disabled { opacity:.6; cursor:default; }
+      .msg { margin-top:14px; font-size:13px; color:#ffb4b4; min-height:18px; }
+      .note { margin:14px 0 0; font-size:12px; }
+      a { color:var(--gold); }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <div class="brand"><img src="../assets/images/alliance_app_icon.png" alt="" /><span>Alliance <b>Matrimony</b></span></div>
+
+      <h1>Get your membership</h1>
+      <p>Pay once, then install the app and sign up with the same email and mobile number.</p>
+
+      <div class="price"><strong>&#8377;1,199</strong><span>One-time payment &middot; 2 years of unlimited usage &middot; incl. GST</span></div>
+      <ul>
+        <li>Unlimited profiles</li>
+        <li>Unlimited messaging</li>
+        <li>Unlimited interests</li>
+        <li>Live together trend</li>
+      </ul>
+
+      <form id="form" novalidate>
+        <label for="name">Full name</label>
+        <input id="name" type="text" autocomplete="name" maxlength="60" />
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="email" placeholder="you@example.com" maxlength="60" />
+        <label for="phone">Mobile number</label>
+        <div class="phone">
+          <input class="cc" value="+91" disabled aria-label="Country code" />
+          <input id="phone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10-digit number" />
+        </div>
+        <button id="pay" type="submit">Pay &#8377;1,199 &amp; continue</button>
+      </form>
+      <div class="msg" id="msg" role="status"></div>
+      <p class="note">Use the same email and mobile number when you sign up in the app. You will be taken to PayU's secure payment page. See our <a href="refunds.html">refund policy</a>.</p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="payu_checkout.js"></script>
+    <script>
+      var SUPABASE_URL = 'https://dsvapacndcszdgmvyaub.supabase.co';
+      var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdmFwYWNuZGNzemRnbXZ5YXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTQ3NDksImV4cCI6MjA5OTc5MDc0OX0.fDpPlp9nmdtgbkdADlx-9pALvZxDIftKlwYkxvSHSxA';
+      var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+      var msg = document.getElementById('msg');
+      var pay = document.getElementById('pay');
+
+      function say(text) { msg.textContent = text; }
+
+      function fail(text) {
+        pay.disabled = false;
+        pay.innerHTML = 'Pay &#8377;1,199 &amp; continue';
+        say(text);
+      }
+
+      document.getElementById('phone').addEventListener('input', function (event) {
+        event.target.value = event.target.value.replace(/\D/g, '').slice(0, 10);
+      });
+
+      document.getElementById('form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var name = document.getElementById('name').value.trim();
+        var email = document.getElementById('email').value.trim().toLowerCase();
+        var phone = document.getElementById('phone').value.trim();
+        if (name.length < 2) { say('Enter your full name.'); return; }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say('Enter a valid email address.'); return; }
+        if (!/^[6-9]\d{9}$/.test(phone)) { say('Enter a valid 10-digit mobile number.'); return; }
+
+        say('');
+        pay.disabled = true;
+        pay.textContent = 'Opening payment...';
+        client.functions.invoke('create-payu-order', {
+          body: { firstname: name, email: email, phone: phone }
+        }).then(function (result) {
+          if (result.error) {
+            var response = result.error.context;
+            if (response && response.json) {
+              return response.json().catch(function () { return null; }).then(function (body) {
+                fail((body && body.error) || 'Unable to start payment. Please try again.');
+              });
+            }
+            fail('Unable to start payment. Please try again.');
+            return;
+          }
+          if (!result.data || result.data.error) {
+            fail((result.data && result.data.error) || 'Unable to start payment. Please try again.');
+            return;
+          }
+          window.openPayuCheckout(result.data);
+        });
+      });
+    </script>
+  </body>
+</html>

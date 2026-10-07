@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alliance Matrimony | Payment</title>
+    <link rel="icon" type="image/png" href="../assets/images/alliance_app_icon.png" />
+    <style>
+      * { box-sizing: border-box; }
+      body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+        font-family:"Aptos","Segoe UI",Arial,sans-serif; color:#fff;
+        background: radial-gradient(circle at 15% 10%, #7a2a52 0, transparent 45%), #1b0d1a; }
+      .card { width:min(460px,100%); padding:36px 30px; border-radius:24px; text-align:center;
+        background:rgba(36,16,31,.85); border:1px solid rgba(245,215,110,.25); }
+      h1 { font-family:Georgia,serif; font-weight:500; margin:12px 0 10px; }
+      p { color:#cdbcc8; line-height:1.6; }
+      .btn { display:block; margin-top:18px; padding:15px; border-radius:14px; text-decoration:none; font-weight:700; color:#fff;
+        background:linear-gradient(135deg,#c8556a,#e8a87c); }
+      .btn.alt { background:transparent; border:1px solid rgba(255,255,255,.3); }
+      .icon { font-size:48px; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <div class="icon" id="icon"></div>
+      <h1 id="title"></h1>
+      <p id="text"></p>
+      <a class="btn" id="store" href="https://play.google.com/store/apps/details?id=com.bnwdevs.alliancematrimony" hidden>Install the app from Google Play</a>
+      <a class="btn alt" id="open-app" href="#" hidden>Already installed? Open the app</a>
+      <a class="btn alt" id="retry" href="membership.html" hidden>Try again</a>
+    </main>
+    <script>
+      var params = new URLSearchParams(window.location.search);
+      var ok = params.get('status') === 'success';
+      var email = params.get('email') || '';
+      document.getElementById('icon').textContent = ok ? '\u2705' : '\u26A0\uFE0F';
+      document.getElementById('title').textContent = ok ? 'Payment successful' : 'Payment not completed';
+      document.getElementById('text').textContent = ok
+        ? 'Your membership is paid for 2 years. Install the app and sign up with the same email' + (email ? ' (' + email + ')' : '') + ' and mobile number you paid with.'
+        : 'We could not confirm your payment. You have not been charged unless your bank says otherwise.';
+      if (ok) {
+        var link = 'alliancematrimony://signup/sign-up-login-screen?paid=1&email=' + encodeURIComponent(email);
+        var open = document.getElementById('open-app');
+        open.href = link; open.hidden = false;
+        document.getElementById('store').hidden = false;
+      } else {
+        document.getElementById('retry').hidden = false;
+      }
+    </script>
+  </body>
+</html>
