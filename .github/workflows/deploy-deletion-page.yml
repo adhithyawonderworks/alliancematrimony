@@ -12,6 +12,9 @@ on:
       - 'web/refunds.html'
       - 'web/delete-account.html'
       - 'web/admin-recover.html'
+      - 'web/membership.html'
+      - 'web/payment-success.html'
+      - 'web/payu_checkout.js'
       - 'assets/images/alliance_app_icon.png'
       - 'web/CNAME'
       - '.github/workflows/deploy-deletion-page.yml'
@@ -49,6 +52,9 @@ jobs:
           cp web/terms.html _site/terms.html
           cp web/privacy.html _site/privacy.html
           cp web/refunds.html _site/refunds.html
+          cp web/membership.html _site/membership.html
+          cp web/payment-success.html _site/payment-success.html
+          cp web/payu_checkout.js _site/payu_checkout.js
           cp web/site.css _site/site.css
           cp assets/images/alliance_app_icon.png _site/assets/images/alliance_app_icon.png
           cp web/CNAME _site/CNAME
