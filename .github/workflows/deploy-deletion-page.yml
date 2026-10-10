@@ -15,6 +15,7 @@ on:
       - 'web/child-safety.html'
       - 'web/admin-recover.html'
       - 'web/membership.html'
+      - 'web/ref/index.html'
       - 'web/payment-success.html'
       - 'web/payu_checkout.js'
       - 'assets/images/alliance_app_icon.png'
@@ -46,7 +47,7 @@ jobs:
 
       - name: Prepare public website
         run: |
-          mkdir -p _site/assets/images
+          mkdir -p _site/assets/images _site/ref
           cp web/homepage.html _site/index.html
           cp web/features.html _site/features.html
           cp web/delete-account.html _site/delete-account.html
@@ -57,6 +58,7 @@ jobs:
           cp web/refunds.html _site/refunds.html
           cp web/child-safety.html _site/child-safety.html
           cp web/membership.html _site/membership.html
+          cp web/ref/index.html _site/ref/index.html
           cp web/payment-success.html _site/payment-success.html
           cp web/payu_checkout.js _site/payu_checkout.js
           cp web/site.css _site/site.css
