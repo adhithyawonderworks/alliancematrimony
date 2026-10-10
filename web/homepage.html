@@ -106,5 +106,12 @@
       </nav>
       <span>&copy; 2026 Alliance Matrimony</span>
     </footer>
+    <script>
+      const referralParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+      const referralCode = referralParams.get('referral_code') || referralParams.get('code');
+      if (referralCode) {
+        window.location.replace('/membership.html?referral_code=' + encodeURIComponent(referralCode));
+      }
+    </script>
   </body>
 </html>

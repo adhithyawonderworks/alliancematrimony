@@ -32,6 +32,8 @@
         background:rgba(255,255,255,.08); color:#fff; font-size:16px; }
       .phone { display:flex; gap:8px; }
       .phone .cc { width:64px; flex:none; text-align:center; padding-left:0; padding-right:0; }
+      .referral-field[hidden] { display:none; }
+      .referral-field input { background:rgba(255,255,255,.05); color:#f5d76e; }
       button { width:100%; margin-top:20px; padding:15px; border:0; border-radius:14px; cursor:pointer;
         background:linear-gradient(135deg,#c8556a,#e8a87c); color:#fff; font-size:16px; font-weight:700; }
       button:disabled { opacity:.6; cursor:default; }
@@ -65,6 +67,10 @@
           <input class="cc" value="+91" disabled aria-label="Country code" />
           <input id="phone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10-digit number" />
         </div>
+        <div class="referral-field" id="referral-field" hidden>
+          <label for="referral-code">Referral code</label>
+          <input id="referral-code" type="text" readonly aria-readonly="true" />
+        </div>
         <button id="pay" type="submit">Pay &#8377;1,199 &amp; continue</button>
       </form>
       <div class="msg" id="msg" role="status"></div>
@@ -78,6 +84,10 @@
       var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdmFwYWNuZGNzemRnbXZ5YXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTQ3NDksImV4cCI6MjA5OTc5MDc0OX0.fDpPlp9nmdtgbkdADlx-9pALvZxDIftKlwYkxvSHSxA';
       var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
       var msg = document.getElementById('msg');
+      var referralParams = new URLSearchParams(window.location.search);
+      var referralCode = (referralParams.get('referral_code') || referralParams.get('code') || 'unlimited bonanza').trim();
+      document.getElementById('referral-code').value = referralCode;
+      document.getElementById('referral-field').hidden = false;
       var pay = document.getElementById('pay');
 
       function say(text) { msg.textContent = text; }
@@ -105,7 +115,7 @@
         pay.disabled = true;
         pay.textContent = 'Opening payment...';
         client.functions.invoke('create-payu-order', {
-          body: { firstname: name, email: email, phone: phone }
+          body: { firstname: name, email: email, phone: phone, referralCode: referralCode }
         }).then(function (result) {
           if (result.error) {
             var response = result.error.context;
