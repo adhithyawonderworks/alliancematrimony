@@ -70,31 +70,6 @@
         </div>
       </section>
 
-      <section class="membership" id="referral-bonanza">
-        <div>
-          <p class="eyebrow">Referral programme</p>
-          <h2>Unlimited Bonanza &mdash; 5 years free premium</h2>
-          <p>Enter this code when you sign up in the Alliance Matrimony app to unlock 5 years of unlimited premium membership, free.</p>
-        </div>
-        <div class="price-block">
-          <span class="price-label">Your referral code</span>
-          <strong id="bonanza-code">unlimited bonanza</strong>
-          <button type="button" id="copy-bonanza-code" class="primary-link" style="cursor:pointer; border:none; background:none;">Copy code <span aria-hidden="true">&#10697;</span></button>
-          <small>Paste this code in the "Referral Code" field during sign up.</small>
-        </div>
-      </section>
-      <script>
-        document.getElementById('copy-bonanza-code')?.addEventListener('click', function () {
-          const code = document.getElementById('bonanza-code').textContent.trim();
-          navigator.clipboard.writeText(code).then(function () {
-            const btn = document.getElementById('copy-bonanza-code');
-            const original = btn.textContent;
-            btn.textContent = 'Copied!';
-            setTimeout(function () { btn.textContent = original; }, 1500);
-          });
-        });
-      </script>
-
       <section class="safety" id="safety">
         <div class="safety-heading">
           <p class="eyebrow">Your information matters</p>
