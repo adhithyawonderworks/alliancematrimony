@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#120d16" />
+    <title>Alliance Matrimony | Referral</title>
+    <link rel="stylesheet" href="../site.css" />
+    <style>
+      main { min-height: 70vh; display: grid; place-items: center; padding: 36px 20px; }
+      .referral { width: min(100%, 480px); text-align: center; }
+      .referral-code { margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; font-size: 22px; font-weight: 700; overflow-wrap: anywhere; }
+      .copy-code { padding: 12px 18px; border: 0; border-radius: 8px; background: #c8556a; color: #fff; font-weight: 700; cursor: pointer; }
+      #status { min-height: 1.5em; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Alliance Matrimony home">
+        <img src="../assets/images/alliance_app_icon.png" alt="" width="42" height="42" />
+        <span>Alliance <strong>Matrimony</strong></span>
+      </a>
+    </header>
+    <main>
+      <section class="referral">
+        <p class="eyebrow">A friend invited you</p>
+        <h1>Join Alliance Matrimony</h1>
+        <p>Use this referral code when you create your profile.</p>
+        <p class="referral-code" id="code">Loading code...</p>
+        <button class="copy-code" id="copy" type="button">Copy referral code</button>
+        <p><a id="signup" href="/membership.html">Continue to sign up</a></p>
+        <p id="status" role="status" aria-live="polite"></p>
+        <p><a href="/">Visit Alliance Matrimony</a></p>
+      </section>
+    </main>
+    <script>
+      const code = new URLSearchParams(window.location.search).get('code') || '';
+      document.getElementById('code').textContent = code || 'No referral code provided';
+      document.getElementById('copy').disabled = !code;
+      if (code) {
+        window.location.replace(
+          '/membership.html?referral_code=' + encodeURIComponent(code)
+        );
+      }
+      document.getElementById('copy').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          document.getElementById('status').textContent = 'Code copied. Paste it in the app during sign up.';
+        } catch (_) {
+          document.getElementById('status').textContent = 'Copy failed. Select the code above to copy it.';
+        }
+      });
+    </script>
+  </body>
+</html>
