@@ -11,6 +11,8 @@ on:
       - 'web/privacy.html'
       - 'web/refunds.html'
       - 'web/delete-account.html'
+      - 'web/support.html'
+      - 'web/child-safety.html'
       - 'web/admin-recover.html'
       - 'web/membership.html'
       - 'web/payment-success.html'
@@ -48,10 +50,12 @@ jobs:
           cp web/homepage.html _site/index.html
           cp web/features.html _site/features.html
           cp web/delete-account.html _site/delete-account.html
+          cp web/support.html _site/support.html
           cp web/admin-recover.html _site/admin-recover.html
           cp web/terms.html _site/terms.html
           cp web/privacy.html _site/privacy.html
           cp web/refunds.html _site/refunds.html
+          cp web/child-safety.html _site/child-safety.html
           cp web/membership.html _site/membership.html
           cp web/payment-success.html _site/payment-success.html
           cp web/payu_checkout.js _site/payu_checkout.js

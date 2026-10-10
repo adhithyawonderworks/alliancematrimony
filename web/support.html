@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#24101f" />
+    <meta name="description" content="Contact Alliance Matrimony customer support." />
+    <title>Customer Support | Alliance Matrimony</title>
+    <link rel="icon" type="image/png" href="../assets/images/alliance_app_icon.png" />
+    <link rel="stylesheet" href="site.css" />
+    <style>
+      .support-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 56px; padding-top: 58px; padding-bottom: 74px; }
+      .support-form { display: grid; gap: 16px; }
+      .support-form label { display: grid; gap: 7px; color: var(--ink); font-size: 13px; font-weight: 650; }
+      .support-form input, .support-form textarea { width: 100%; border: 1px solid var(--line); border-radius: 5px; padding: 12px 13px; color: var(--ink); background: white; font: inherit; }
+      .support-form textarea { min-height: 150px; resize: vertical; }
+      .support-form input:focus, .support-form textarea:focus { outline: 2px solid var(--mint); border-color: #4d927c; }
+      .support-form button { justify-self: start; border: 0; cursor: pointer; }
+      .support-form button:disabled { opacity: .65; cursor: wait; }
+      .support-status { min-height: 24px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+      .support-contact { align-self: start; padding: 22px 0 22px 22px; border-left: 3px solid var(--coral); }
+      .support-contact p { color: var(--muted); font-size: 14px; line-height: 1.65; }
+      .support-contact a { display: block; margin: 10px 0; color: var(--berry); font-weight: 650; overflow-wrap: anywhere; }
+      .hp-field { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+      @media (max-width: 760px) { .support-layout { grid-template-columns: 1fr; gap: 32px; padding-top: 40px; } }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Alliance Matrimony home">
+        <img src="../assets/images/alliance_app_icon.png" alt="" width="42" height="42" />
+        <span>Alliance <strong>Matrimony</strong></span>
+      </a>
+      <nav aria-label="Main navigation"><a href="/">Home</a><a class="nav-contact" href="mailto:support@alliancematrimony.online">Contact</a></nav>
+    </header>
+
+    <main class="support-layout">
+      <section>
+        <p class="eyebrow">Customer care</p>
+        <h1 style="font-size:48px">How can we help?</h1>
+        <p class="hero-intro">Send your question to our support team. All fields are required.</p>
+        <form id="support-form" class="support-form">
+          <label for="name">Name<input id="name" name="name" type="text" autocomplete="name" maxlength="100" required /></label>
+          <label for="profileId">Profile ID<input id="profileId" name="profileId" type="text" autocomplete="off" maxlength="100" required /></label>
+          <label for="email">Email address<input id="email" name="email" type="email" autocomplete="email" maxlength="254" required /></label>
+          <label for="phone">Phone number<input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="20" required /></label>
+          <label for="description">Description<textarea id="description" name="description" maxlength="3000" required></textarea></label>
+          <div class="hp-field" aria-hidden="true"><label for="website">Leave this field empty<input id="website" name="website" type="text" tabindex="-1" autocomplete="off" /></label></div>
+          <button id="send-button" class="primary-link" type="submit">Send request</button>
+          <p id="support-status" class="support-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+      <aside class="support-contact">
+        <p class="eyebrow">For more information</p>
+        <h2>Contact us</h2>
+        <a href="mailto:support@alliancematrimony.online">support@alliancematrimony.online</a>
+        <a href="tel:+917899873947">+91 7899873947</a>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <a class="footer-brand" href="/">Alliance Matrimony</a>
+      <span>Digital matchmaking service</span>
+      <nav aria-label="Policies"><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="delete-account.html">Delete account</a><a href="child-safety.html">Child Safety</a></nav>
+      <span>&copy; 2026 Alliance Matrimony</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const supabaseClient = window.supabase.createClient(
+        'https://dsvapacndcszdgmvyaub.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdmFwYWNuZGNzemRnbXZ5YXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTQ3NDksImV4cCI6MjA5OTc5MDc0OX0.fDpPlp9nmdtgbkdADlx-9pALvZxDIftKlwYkxvSHSxA'
+      );
+      const params = new URLSearchParams(window.location.search);
+      ['name', 'profileId', 'email', 'phone'].forEach((key) => {
+        const value = params.get(key);
+        if (value) document.getElementById(key).value = value;
+      });
+
+      const form = document.getElementById('support-form');
+      const button = document.getElementById('send-button');
+      const status = document.getElementById('support-status');
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const values = Object.fromEntries(new FormData(form).entries());
+        if (Object.entries(values).some(([key, value]) => key !== 'website' && !String(value).trim())) {
+          status.textContent = 'Please complete every field.';
+          return;
+        }
+        button.disabled = true;
+        button.textContent = 'Sending...';
+        status.textContent = '';
+        try {
+          const { error } = await supabaseClient.functions.invoke('customer-support', {
+            body: {
+              name: values.name,
+              profileId: values.profileId,
+              email: values.email,
+              phone: values.phone,
+              description: values.description,
+              website: values.website
+            }
+          });
+          if (error) throw error;
+          form.reset();
+          status.textContent = 'Your request has been sent. Our support team will get back to you.';
+        } catch (_) {
+          status.textContent = 'We could not send your request. Please try again or email support@alliancematrimony.online.';
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Send request';
+        }
+      });
+    </script>
+  </body>
+</html>

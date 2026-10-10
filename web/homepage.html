@@ -19,7 +19,7 @@
         <a href="#how-it-works">How it works</a>
         <a href="#membership">Membership</a>
         <a href="#safety">Safety</a>
-        <a class="nav-contact" href="mailto:support@alliancematrimony.in">Contact</a>
+        <a class="nav-contact" href="mailto:support@alliancematrimony.online">Contact</a>
       </nav>
     </header>
 
@@ -70,6 +70,31 @@
         </div>
       </section>
 
+      <section class="membership" id="referral-bonanza">
+        <div>
+          <p class="eyebrow">Referral programme</p>
+          <h2>Unlimited Bonanza &mdash; 5 years free premium</h2>
+          <p>Enter this code when you sign up in the Alliance Matrimony app to unlock 5 years of unlimited premium membership, free.</p>
+        </div>
+        <div class="price-block">
+          <span class="price-label">Your referral code</span>
+          <strong id="bonanza-code">unlimited bonanza</strong>
+          <button type="button" id="copy-bonanza-code" class="primary-link" style="cursor:pointer; border:none; background:none;">Copy code <span aria-hidden="true">&#10697;</span></button>
+          <small>Paste this code in the "Referral Code" field during sign up.</small>
+        </div>
+      </section>
+      <script>
+        document.getElementById('copy-bonanza-code')?.addEventListener('click', function () {
+          const code = document.getElementById('bonanza-code').textContent.trim();
+          navigator.clipboard.writeText(code).then(function () {
+            const btn = document.getElementById('copy-bonanza-code');
+            const original = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(function () { btn.textContent = original; }, 1500);
+          });
+        });
+      </script>
+
       <section class="safety" id="safety">
         <div class="safety-heading">
           <p class="eyebrow">Your information matters</p>
@@ -84,10 +109,13 @@
 
       <section class="contact-strip">
         <div>
-          <p class="eyebrow">Need help?</p>
+          <p class="eyebrow">For more information</p>
           <h2>We are here to help with your account.</h2>
         </div>
-        <a href="mailto:support@alliancematrimony.in">support@alliancematrimony.in</a>
+        <div class="contact-details">
+          <a href="mailto:support@alliancematrimony.online">support@alliancematrimony.online</a>
+          <a href="tel:+917899873947">+91 7899873947</a>
+        </div>
       </section>
     </main>
 
@@ -99,6 +127,7 @@
         <a href="privacy.html">Privacy</a>
         <a href="refunds.html">Refunds &amp; cancellation</a>
         <a href="delete-account.html">Delete account</a>
+        <a href="child-safety.html">Child Safety</a>
       </nav>
       <span>&copy; 2026 Alliance Matrimony</span>
     </footer>
