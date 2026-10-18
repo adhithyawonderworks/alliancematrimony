@@ -40,6 +40,13 @@
       .msg { margin-top:14px; font-size:13px; color:#ffb4b4; min-height:18px; }
       .note { margin:14px 0 0; font-size:12px; }
       a { color:var(--gold); }
+      .company { display:flex; align-items:center; gap:16px; margin-top:22px; padding-top:18px; border-top:1px solid rgba(255,255,255,.15); }
+      .logo { flex:none; text-align:center; }
+      .powered-by { display:block; margin-bottom:4px; color:var(--muted); font-size:10px; }
+      .logo img { display:block; width:140px; height:76px; object-fit:contain; }
+      .company .divider { align-self:stretch; width:1px; background:rgba(255,255,255,.3); }
+      .company .contact { display:grid; gap:6px; font-size:13px; min-width:0; }
+      .company .contact a { text-decoration:none; overflow-wrap:anywhere; }
     </style>
   </head>
   <body>
@@ -75,6 +82,14 @@
       </form>
       <div class="msg" id="msg" role="status"></div>
       <p class="note">Use the same email and mobile number when you log in to the app. You will be taken to PayU's secure payment page.</p>
+      <div class="company">
+        <div class="logo"><span class="powered-by">Powered by</span><img src="thejas-logo-transparent.png" alt="Thejas Technologies India" /></div>
+        <div class="divider"></div>
+        <div class="contact">
+          <a href="mailto:support@alliancematrimony.online">support@alliancematrimony.online</a>
+          <a href="tel:+917899873947">+91 7899873947</a>
+        </div>
+      </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -84,11 +99,11 @@
       var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdmFwYWNuZGNzemRnbXZ5YXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTQ3NDksImV4cCI6MjA5OTc5MDc0OX0.fDpPlp9nmdtgbkdADlx-9pALvZxDIftKlwYkxvSHSxA';
       var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
       var msg = document.getElementById('msg');
+      var pay = document.getElementById('pay');
       var referralParams = new URLSearchParams(window.location.search);
       var referralCode = (referralParams.get('referral_code') || referralParams.get('code') || 'unlimited bonanza').trim();
       document.getElementById('referral-code').value = referralCode;
       document.getElementById('referral-field').hidden = false;
-      var pay = document.getElementById('pay');
 
       function say(text) { msg.textContent = text; }
 

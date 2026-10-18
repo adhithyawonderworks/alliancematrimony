@@ -17,6 +17,7 @@ on:
       - 'web/membership.html'
       - 'web/ref/index.html'
       - 'web/payment-success.html'
+      - 'web/thejas-logo-transparent.png'
       - 'web/payu_checkout.js'
       - 'assets/images/alliance_app_icon.png'
       - 'web/CNAME'
@@ -60,6 +61,7 @@ jobs:
           cp web/membership.html _site/membership.html
           cp web/ref/index.html _site/ref/index.html
           cp web/payment-success.html _site/payment-success.html
+          cp web/thejas-logo-transparent.png _site/thejas-logo-transparent.png
           cp web/payu_checkout.js _site/payu_checkout.js
           cp web/site.css _site/site.css
           cp assets/images/alliance_app_icon.png _site/assets/images/alliance_app_icon.png
