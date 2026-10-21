@@ -42,6 +42,7 @@ test_result*
 !/web/delete-account.html
 !/web/support.html
 !/web/admin-recover.html
+!/web/password-recovery.html
 !/web/features.html
 !/web/child-safety.html
 !/web/membership.html
