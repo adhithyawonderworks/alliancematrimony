@@ -14,6 +14,7 @@ on:
       - 'web/support.html'
       - 'web/child-safety.html'
       - 'web/admin-recover.html'
+      - 'web/password-recovery.html'
       - 'web/membership.html'
       - 'web/ref/index.html'
       - 'web/payment-success.html'
@@ -54,6 +55,7 @@ jobs:
           cp web/delete-account.html _site/delete-account.html
           cp web/support.html _site/support.html
           cp web/admin-recover.html _site/admin-recover.html
+          cp web/password-recovery.html _site/password-recovery.html
           cp web/terms.html _site/terms.html
           cp web/privacy.html _site/privacy.html
           cp web/refunds.html _site/refunds.html
