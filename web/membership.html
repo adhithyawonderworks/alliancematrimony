@@ -54,9 +54,9 @@
       <div class="brand"><img src="../assets/images/alliance_app_icon.png" alt="" /><span>Alliance <b>Matrimony</b></span></div>
 
       <h1>Get your membership</h1>
-      <p>Pay once, then install the app and sign up with the same email and mobile number.</p>
+      <p id="intro">Pay once, then continue with your Alliance Matrimony account.</p>
 
-      <div class="price"><strong>&#8377;1,199</strong><span>One-time payment &middot; 2 years of unlimited usage &middot; incl. GST</span></div>
+      <div class="price"><strong>&#8377;1,199</strong><span>One-time payment &middot; 5 years of unlimited usage &middot; incl. GST</span></div>
       <ul>
         <li>Unlimited profiles</li>
         <li>Unlimited messaging</li>
@@ -78,10 +78,10 @@
           <label for="referral-code">Referral code</label>
           <input id="referral-code" type="text" readonly aria-readonly="true" />
         </div>
-        <button id="pay" type="submit">Pay &#8377;1,199 &amp; continue</button>
+        <button id="pay" type="submit">Join Now</button>
       </form>
       <div class="msg" id="msg" role="status"></div>
-      <p class="note">Use the same email and mobile number when you log in to the app. You will be taken to PayU's secure payment page.</p>
+      <p class="note" id="payment-note">Use the same email and mobile number when you log in to the app. You will be taken to PayU's secure payment page.</p>
       <div class="company">
         <div class="logo"><span class="powered-by">Powered by</span><img src="thejas-logo-transparent.png" alt="Thejas Technologies India" /></div>
         <div class="divider"></div>
@@ -102,6 +102,16 @@
       var pay = document.getElementById('pay');
       var referralParams = new URLSearchParams(window.location.search);
       var referralCode = (referralParams.get('referral_code') || referralParams.get('code') || 'unlimited bonanza').trim();
+      var profileCompletion = referralParams.get('profile_completion') === '1';
+      document.getElementById('name').value = referralParams.get('name') || '';
+      document.getElementById('email').value = referralParams.get('email') || '';
+      document.getElementById('phone').value = (referralParams.get('phone') || '').replace(/\D/g, '').slice(-10);
+      if (profileCompletion) {
+        document.getElementById('intro').textContent =
+          'Your account and profile are ready. Complete payment to activate your membership.';
+        document.getElementById('payment-note').textContent =
+          'After payment, return to Alliance Matrimony to continue.';
+      }
       document.getElementById('referral-code').value = referralCode;
       document.getElementById('referral-field').hidden = false;
 
@@ -109,7 +119,7 @@
 
       function fail(text) {
         pay.disabled = false;
-        pay.innerHTML = 'Pay &#8377;1,199 &amp; continue';
+        pay.textContent = 'Join Now';
         say(text);
       }
 
@@ -130,7 +140,14 @@
         pay.disabled = true;
         pay.textContent = 'Opening payment...';
         client.functions.invoke('create-payu-order', {
-          body: { firstname: name, email: email, phone: phone, referralCode: referralCode }
+          body: {
+            firstname: name,
+            email: email,
+            phone: phone,
+            referralCode: referralCode,
+            membershipSignup: profileCompletion,
+            profileCompletion: profileCompletion
+          }
         }).then(function (result) {
           if (result.error) {
             var response = result.error.context;

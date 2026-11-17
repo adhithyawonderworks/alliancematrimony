@@ -48,13 +48,17 @@
       var params = new URLSearchParams(window.location.search);
       var ok = params.get('status') === 'success';
       var email = params.get('email') || '';
+      var completeProfile = params.get('complete_profile') === '1';
       document.getElementById('icon').textContent = ok ? '\u2705' : '\u26A0\uFE0F';
       document.getElementById('title').textContent = ok ? 'Payment successful' : 'Payment not completed';
       document.getElementById('text').textContent = ok
-        ? 'Your membership is paid for 2 years. Install the app and sign up with the same email' + (email ? ' (' + email + ')' : '') + ' and mobile number you paid with.'
+        ? (completeProfile
+          ? 'Your membership is paid for 5 years. Open the app to continue.'
+          : 'Your membership is paid for 5 years. Install the app and sign up with the same email' + (email ? ' (' + email + ')' : '') + ' and mobile number you paid with.')
         : 'We could not confirm your payment. You have not been charged unless your bank says otherwise.';
       if (ok) {
-        var link = 'alliancematrimony://signup/sign-up-login-screen?paid=1&email=' + encodeURIComponent(email);
+        var link = 'alliancematrimony://signup/sign-up-login-screen?paid=1&email=' + encodeURIComponent(email)
+          + (completeProfile ? '&complete_profile=1' : '');
         var open = document.getElementById('open-app');
         open.href = link; open.hidden = false;
         document.getElementById('store').hidden = false;
