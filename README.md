@@ -19,6 +19,14 @@ supabase functions deploy payu-callback
 
 Open Premium and click `Pay INR 500` to be redirected to PayU's test-mode
 checkout page.
+## Website Razorpay test
+
+The website's Razorpay option opens a Razorpay-hosted test Payment Link. It does
+not use the Supabase Razorpay functions and does not activate membership; use
+PayU for membership purchases. To test, complete the form, click Join Now,
+select the test option, and use Razorpay test payment details. The link can
+be replaced in `web/membership.html` when a new test link is needed.
+
 # Flutter
 
 A modern Flutter-based mobile application utilizing the latest mobile development technologies and tools for building responsive cross-platform applications.

@@ -86,13 +86,14 @@
         <button id="pay" type="submit">Join Now</button>
         <div class="gateways" id="gateways" hidden>
           <p>Choose a payment option:</p>
-          <button id="razorpay" type="button">Continue with Razorpay</button>
+          <button id="razorpay" type="button">Try Razorpay (test only)</button>
+          <p>Razorpay is for testing only. Test payments do not activate membership.</p>
           <button id="payu" type="button">Continue with PayU</button>
           <button id="back" class="back" type="button">Back</button>
         </div>
       </form>
       <div class="msg" id="msg" role="status"></div>
-      <p class="note" id="payment-note">Log in to the app with either the same email address or mobile number you paid with. Choose Razorpay or PayU for secure payment.</p>
+      <p class="note" id="payment-note">Use PayU to purchase membership, then log in to the app with the same email address or mobile number.</p>
       <div class="company">
         <div class="logo"><span class="powered-by">Powered by</span><img src="thejas-logo-transparent.png" alt="Thejas Technologies India" /></div>
         <div class="divider"></div>
@@ -104,7 +105,6 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="payu_checkout.js"></script>
     <script>
       var SUPABASE_URL = 'https://dsvapacndcszdgmvyaub.supabase.co';
@@ -211,55 +211,8 @@
         }
       });
 
-      razorpayButton.addEventListener('click', async function () {
-        var data = details();
-        if (!valid(data)) return;
-        if (typeof window.Razorpay !== 'function') {
-          fail('Razorpay could not load. Check your connection and try again.');
-          return;
-        }
-        busy();
-        try {
-          var order = await invoke('create-razorpay-order', data);
-          var completed = false;
-          var checkout = new window.Razorpay({
-            key: order.key_id,
-            amount: order.amount,
-            currency: order.currency,
-            order_id: order.order_id,
-            name: 'Alliance Matrimony',
-            description: 'Membership',
-            prefill: { name: data.firstname, email: data.email, contact: data.phone },
-            handler: async function (payment) {
-              completed = true;
-              say('Confirming payment...');
-              try {
-                var result = await invoke('verify-razorpay-payment', payment);
-                var url = new URL('payment-success.html', window.location.href);
-                url.searchParams.set('status', 'success');
-                url.searchParams.set('txnid', order.order_id);
-                url.searchParams.set('email', data.email);
-                if (profileCompletion) url.searchParams.set('complete_profile', '1');
-                if (result.referral_code) url.searchParams.set('referral_code', result.referral_code);
-                window.location.href = url.toString();
-              } catch (error) {
-                fail((error.message || 'Unable to confirm payment.') + ' If charged, contact support before paying again.');
-              }
-            },
-            modal: {
-              ondismiss: function () {
-                if (!completed) fail('Payment cancelled. You can choose a payment option to try again.');
-              }
-            }
-          });
-          checkout.on('payment.failed', function (response) {
-            completed = true;
-            fail((response.error && response.error.description) || 'Payment failed. Please try again.');
-          });
-          checkout.open();
-        } catch (error) {
-          fail(error.message || 'Unable to start payment. Please try again.');
-        }
+      razorpayButton.addEventListener('click', function () {
+        window.location.href = 'https://rzp.io/rzp/Ahrh0ay';
       });
     </script>
   </body>
