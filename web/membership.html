@@ -37,6 +37,11 @@
       button { width:100%; margin-top:20px; padding:15px; border:0; border-radius:14px; cursor:pointer;
         background:linear-gradient(135deg,#c8556a,#e8a87c); color:#fff; font-size:16px; font-weight:700; }
       button:disabled { opacity:.6; cursor:default; }
+      .gateways[hidden] { display:none; }
+      .gateways { margin-top:20px; }
+      .gateways p { margin:0; color:#f3e7ee; }
+      .gateways button { margin-top:10px; }
+      .gateways .back { background:transparent; border:1px solid rgba(255,255,255,.3); }
       .msg { margin-top:14px; font-size:13px; color:#ffb4b4; min-height:18px; }
       .note { margin:14px 0 0; font-size:12px; }
       a { color:var(--gold); }
@@ -79,9 +84,15 @@
           <input id="referral-code" type="text" readonly aria-readonly="true" />
         </div>
         <button id="pay" type="submit">Join Now</button>
+        <div class="gateways" id="gateways" hidden>
+          <p>Choose a payment option:</p>
+          <button id="razorpay" type="button">Continue with Razorpay</button>
+          <button id="payu" type="button">Continue with PayU</button>
+          <button id="back" class="back" type="button">Back</button>
+        </div>
       </form>
       <div class="msg" id="msg" role="status"></div>
-      <p class="note" id="payment-note">Use the same email and mobile number when you log in to the app. You will be taken to PayU's secure payment page.</p>
+      <p class="note" id="payment-note">Log in to the app with either the same email address or mobile number you paid with. Choose Razorpay or PayU for secure payment.</p>
       <div class="company">
         <div class="logo"><span class="powered-by">Powered by</span><img src="thejas-logo-transparent.png" alt="Thejas Technologies India" /></div>
         <div class="divider"></div>
@@ -93,6 +104,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="payu_checkout.js"></script>
     <script>
       var SUPABASE_URL = 'https://dsvapacndcszdgmvyaub.supabase.co';
@@ -100,6 +112,10 @@
       var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
       var msg = document.getElementById('msg');
       var pay = document.getElementById('pay');
+      var gateways = document.getElementById('gateways');
+      var razorpayButton = document.getElementById('razorpay');
+      var payuButton = document.getElementById('payu');
+      var back = document.getElementById('back');
       var referralParams = new URLSearchParams(window.location.search);
       var referralCode = (referralParams.get('referral_code') || referralParams.get('code') || 'unlimited bonanza').trim();
       var profileCompletion = referralParams.get('profile_completion') === '1';
@@ -118,9 +134,52 @@
       function say(text) { msg.textContent = text; }
 
       function fail(text) {
-        pay.disabled = false;
-        pay.textContent = 'Join Now';
+        razorpayButton.disabled = false;
+        payuButton.disabled = false;
+        back.disabled = false;
         say(text);
+      }
+
+      function busy() {
+        razorpayButton.disabled = true;
+        payuButton.disabled = true;
+        back.disabled = true;
+        say('Opening payment...');
+      }
+
+      function details() {
+        return {
+          firstname: document.getElementById('name').value.trim(),
+          email: document.getElementById('email').value.trim().toLowerCase(),
+          phone: document.getElementById('phone').value.trim(),
+          referralCode: referralCode,
+          websiteMembership: true,
+          membershipSignup: profileCompletion,
+          profileCompletion: profileCompletion
+        };
+      }
+
+      function valid(data) {
+        if (data.firstname.length < 2) { say('Enter your full name.'); return false; }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) { say('Enter a valid email address.'); return false; }
+        if (!/^[6-9]\d{9}$/.test(data.phone)) { say('Enter a valid 10-digit mobile number.'); return false; }
+        return true;
+      }
+
+      async function invoke(name, body) {
+        var result = await client.functions.invoke(name, { body: body });
+        if (result.error) {
+          var response = result.error.context;
+          if (response && response.json) {
+            var errorBody = await response.json().catch(function () { return null; });
+            throw new Error((errorBody && errorBody.error) || 'Unable to process payment. Please try again.');
+          }
+          throw new Error('Unable to process payment. Please try again.');
+        }
+        if (!result.data || result.data.error) {
+          throw new Error((result.data && result.data.error) || 'Unable to process payment. Please try again.');
+        }
+        return result.data;
       }
 
       document.getElementById('phone').addEventListener('input', function (event) {
@@ -129,42 +188,78 @@
 
       document.getElementById('form').addEventListener('submit', function (event) {
         event.preventDefault();
-        var name = document.getElementById('name').value.trim();
-        var email = document.getElementById('email').value.trim().toLowerCase();
-        var phone = document.getElementById('phone').value.trim();
-        if (name.length < 2) { say('Enter your full name.'); return; }
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say('Enter a valid email address.'); return; }
-        if (!/^[6-9]\d{9}$/.test(phone)) { say('Enter a valid 10-digit mobile number.'); return; }
-
+        if (!valid(details())) return;
         say('');
-        pay.disabled = true;
-        pay.textContent = 'Opening payment...';
-        client.functions.invoke('create-payu-order', {
-          body: {
-            firstname: name,
-            email: email,
-            phone: phone,
-            referralCode: referralCode,
-            membershipSignup: profileCompletion,
-            profileCompletion: profileCompletion
-          }
-        }).then(function (result) {
-          if (result.error) {
-            var response = result.error.context;
-            if (response && response.json) {
-              return response.json().catch(function () { return null; }).then(function (body) {
-                fail((body && body.error) || 'Unable to start payment. Please try again.');
-              });
+        pay.hidden = true;
+        gateways.hidden = false;
+      });
+
+      back.addEventListener('click', function () {
+        gateways.hidden = true;
+        pay.hidden = false;
+        say('');
+      });
+
+      payuButton.addEventListener('click', async function () {
+        var data = details();
+        if (!valid(data)) return;
+        busy();
+        try {
+          window.openPayuCheckout(await invoke('create-payu-order', data));
+        } catch (error) {
+          fail(error.message || 'Unable to start payment. Please try again.');
+        }
+      });
+
+      razorpayButton.addEventListener('click', async function () {
+        var data = details();
+        if (!valid(data)) return;
+        if (typeof window.Razorpay !== 'function') {
+          fail('Razorpay could not load. Check your connection and try again.');
+          return;
+        }
+        busy();
+        try {
+          var order = await invoke('create-razorpay-order', data);
+          var completed = false;
+          var checkout = new window.Razorpay({
+            key: order.key_id,
+            amount: order.amount,
+            currency: order.currency,
+            order_id: order.order_id,
+            name: 'Alliance Matrimony',
+            description: 'Membership',
+            prefill: { name: data.firstname, email: data.email, contact: data.phone },
+            handler: async function (payment) {
+              completed = true;
+              say('Confirming payment...');
+              try {
+                var result = await invoke('verify-razorpay-payment', payment);
+                var url = new URL('payment-success.html', window.location.href);
+                url.searchParams.set('status', 'success');
+                url.searchParams.set('txnid', order.order_id);
+                url.searchParams.set('email', data.email);
+                if (profileCompletion) url.searchParams.set('complete_profile', '1');
+                if (result.referral_code) url.searchParams.set('referral_code', result.referral_code);
+                window.location.href = url.toString();
+              } catch (error) {
+                fail((error.message || 'Unable to confirm payment.') + ' If charged, contact support before paying again.');
+              }
+            },
+            modal: {
+              ondismiss: function () {
+                if (!completed) fail('Payment cancelled. You can choose a payment option to try again.');
+              }
             }
-            fail('Unable to start payment. Please try again.');
-            return;
-          }
-          if (!result.data || result.data.error) {
-            fail((result.data && result.data.error) || 'Unable to start payment. Please try again.');
-            return;
-          }
-          window.openPayuCheckout(result.data);
-        });
+          });
+          checkout.on('payment.failed', function (response) {
+            completed = true;
+            fail((response.error && response.error.description) || 'Payment failed. Please try again.');
+          });
+          checkout.open();
+        } catch (error) {
+          fail(error.message || 'Unable to start payment. Please try again.');
+        }
       });
     </script>
   </body>
